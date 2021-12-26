@@ -192,7 +192,7 @@
 
 <p>查询数据库版本信息</p>
 <p>前面我们说了三个重要的表,现在他们派上用场了</p>
-<p>如何根据数据库得知其中的数据表呢，我们可以根据information_schema数据库中的information_schema.schemata，information_schema.tables,information_schema.columns三个表格,这三个表格包括了数据库所有的库名,表明和字段名</p>
+<p>如何根据数据库得知其中的数据表呢，我们可以根据information_schema数据库中的schemata，tables,columns三个表格,这三个表格包括了数据库所有的库名,表明和字段名</p>
 <img src="/2021/12/26/sql%E6%B3%A8%E5%85%A5/5.png" class="">
 
 <figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">1&#x27; union select SCHEMA_NAME,2 FROM INFORMATION_SCHEMA.SCHEMATA # //查询所有的数据库名</span><br></pre></td></tr></table></figure>
