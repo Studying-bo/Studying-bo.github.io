@@ -1,6 +1,85 @@
 <?xml version="1.0" encoding="utf-8"?>
 <search>
   <entry>
+    <title>Gopher协议学习</title>
+    <url>/2021/12/27/gopher%E5%8D%8F%E8%AE%AE%E7%9A%84%E5%AD%A6%E4%B9%A0/</url>
+    <content><![CDATA[<h4 id="Gopher协议的学习"><a href="#Gopher协议的学习" class="headerlink" title="Gopher协议的学习"></a>Gopher协议的学习</h4><h5 id="定义："><a href="#定义：" class="headerlink" title="定义："></a>定义：</h5><p>Gopher是Internet上一个非常有名的信息查找系统，它将Internet上的文件组织成某种索引，很方便地将用户从Internet的一处带到另一处。在WWW出现之前，Gopher是Internet上最主要的信息检索工具，Gopher站点也是最主要的站点，使用tcp70端口。但在WWW出现后，Gopher失去了昔日的辉煌。现在它基本过时，人们很少再使用它；(百度百科)</p>
+<h5 id="gopher协议格式"><a href="#gopher协议格式" class="headerlink" title="gopher协议格式:"></a>gopher协议格式:</h5><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">gopher协议  URL:gopher://&lt;host&gt;:&lt;port&gt;/&lt;gopher-path&gt;_后接TCP数据流 可用于构造Http请求包</span><br></pre></td></tr></table></figure>
+
+<span id="more"></span>
+
+<h5 id="利用条件"><a href="#利用条件" class="headerlink" title="利用条件"></a>利用条件</h5><img src="/2021/12/27/gopher%E5%8D%8F%E8%AE%AE%E7%9A%84%E5%AD%A6%E4%B9%A0/1.png" class="">
+
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">nc -lvp 4444  //kali开启4444端口进行监听 </span><br></pre></td></tr></table></figure>
+
+<img src="/2021/12/27/gopher%E5%8D%8F%E8%AE%AE%E7%9A%84%E5%AD%A6%E4%B9%A0/2.png" class="">
+
+<h5 id="通过pikachu靶场演示"><a href="#通过pikachu靶场演示" class="headerlink" title="通过pikachu靶场演示"></a>通过pikachu靶场演示</h5><img src="/2021/12/27/gopher%E5%8D%8F%E8%AE%AE%E7%9A%84%E5%AD%A6%E4%B9%A0/3.png" class="">
+
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">http://192.168.159.132/pikachu/vul/ssrf/ssrf_curl.php?url=http://192.168.159.132/pikachu/vul/ssrf/ssrf_info/info1.php //看到网站url参数为url=一个url 可能存在ssrf漏洞</span><br></pre></td></tr></table></figure>
+
+<p>我们可以将url后面的参数改为gopheri协议像目标主机发送数据流</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">http://192.168.159.132/pikachu/vul/ssrf/ssrf_curl.php?url=gopher://kaliIP:端口号/这是我发送的数据</span><br></pre></td></tr></table></figure>
+
+<img src="/2021/12/27/gopher%E5%8D%8F%E8%AE%AE%E7%9A%84%E5%AD%A6%E4%B9%A0/4.png" class="">
+
+<p>可以看到kali这边成功的接收到了我们通过gopher协议传输的数据</p>
+<h5 id="gopher协议发送GET、POST请求"><a href="#gopher协议发送GET、POST请求" class="headerlink" title="gopher协议发送GET、POST请求"></a>gopher协议发送GET、POST请求</h5><h6 id="GET请求"><a href="#GET请求" class="headerlink" title="GET请求"></a>GET请求</h6><p>步骤</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">1、构造HTTP数据包</span><br><span class="line">2、URL编码、替换回车换行为%0d%0a</span><br><span class="line">3、发送gopher协议</span><br></pre></td></tr></table></figure>
+
+<p>GET型的HTTP数据包</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">GET /ssrf/base/get.php?url=test HTTP/1.1</span><br><span class="line">Host: 192.168.159.132</span><br></pre></td></tr></table></figure>
+
+<p>为了方便我们直接在kali中进行演示</p>
+<p>首先进入/var/www/html目录下创建gopher.php</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">cd /var/www/www   </span><br><span class="line">vim gopher.php</span><br></pre></td></tr></table></figure>
+
+<p>将php代码写入gopher.php中</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&lt;?php echo &quot;Hello &quot;.$_GET[&quot;name&quot;].&quot;\n&quot; ?&gt;</span><br></pre></td></tr></table></figure>
+
+<p>开启apache</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">systemctl start apache2 //开启apache</span><br></pre></td></tr></table></figure>
+
+<p>重新打开一个shell</p>
+<p>输入命令 这里注意我们使用的是http数据包,我们每次在浏览器输入的参数等,浏览器都会进行url编码以后才会传输.</p>
+<p>因此我们需要对输入的命令进行url编码</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">curl gopher://192.168.159.131:80/_GET%20/gopher.php%3fname=xiaobai%20HTTP/1.1%0d%0AHost:%20192.168.159.131%0d%0A </span><br></pre></td></tr></table></figure>
+
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">1、问号（？）需要转码为URL编码，也就是%3f</span><br><span class="line">2、回车换行要变为%0d%0a,但如果直接用工具转，可能只会有%0a</span><br><span class="line">3、在HTTP包的最后要加%0d%0a，代表消息结束 //具体http格式可参考之前写的http请求头学习的文章</span><br></pre></td></tr></table></figure>
+
+<p>成功通过get方式发送http数据包</p>
+<img src="/2021/12/27/gopher%E5%8D%8F%E8%AE%AE%E7%9A%84%E5%AD%A6%E4%B9%A0/5.png" class="">
+
+<h6 id="POST请求"><a href="#POST请求" class="headerlink" title="POST请求"></a>POST请求</h6><p>同样的方法先在html目录下创建gopher_post.php文件</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">cd /var/www/www</span><br><span class="line">vim gopher_post.php</span><br></pre></td></tr></table></figure>
+
+<p>php代码</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&lt;?php</span><br><span class="line">    echo &quot;Hello &quot;.$_POST[&quot;name&quot;].&quot;\n&quot;</span><br><span class="line">?&gt;</span><br></pre></td></tr></table></figure>
+
+<p>post请求包格式</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">POST /gopher_post.php HTTP/1.1 //请求行</span><br><span class="line">host:192.168.159.131 //请求头 </span><br><span class="line"></span><br><span class="line">name=libo //请求实体 </span><br></pre></td></tr></table></figure>
+
+<p>这里需要提醒一下,get请求包是没有请求实体的参数直接跟在了uri后面,而post请求包参数是放在请求实体的,具体详细信息可以参考我之前的文章HTTP请求头的学习文章有详细介绍.</p>
+<p>url编码后</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">curl gopher://192.168.159.131:80/_POST%20/gopher_post.php%20HTTP/1.1%0d%0AHost:192.168.159.131%0d%0AContent-Type:application/x-www-form-urlencoded%0d%0AContent-Length:13%0d%0A%0d%0Aname=xiaobai%0d%0A </span><br></pre></td></tr></table></figure>
+
+<img src="/2021/12/27/gopher%E5%8D%8F%E8%AE%AE%E7%9A%84%E5%AD%A6%E4%B9%A0/6.png" class="">
+
+<p>成功通过post方式发送数据包</p>
+<p>注意:POST请求头在原有基础上多增加了Content-Type,Content-Length两个请求头参数.</p>
+<blockquote>
+<p>借鉴文章[Gopher协议在SSRF漏洞中的深入研究(<a href="https://zhuanlan.zhihu.com/p/112055947">https://zhuanlan.zhihu.com/p/112055947</a>)</p>
+</blockquote>
+]]></content>
+      <categories>
+        <category>网络协议学习</category>
+      </categories>
+      <tags>
+        <tag>http协议</tag>
+        <tag>Gopher协议</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>网络学习</title>
     <url>/2021/12/26/http%E5%AD%A6%E4%B9%A0/</url>
     <content><![CDATA[<h1 id="http的学习"><a href="#http的学习" class="headerlink" title="http的学习"></a>http的学习</h1><h3 id="昨天看了mj老师关于http中请求头中参数的讲解-收获了很多-特此整理成笔记记录-方便以后的复习"><a href="#昨天看了mj老师关于http中请求头中参数的讲解-收获了很多-特此整理成笔记记录-方便以后的复习" class="headerlink" title="昨天看了mj老师关于http中请求头中参数的讲解,收获了很多,特此整理成笔记记录,方便以后的复习."></a>昨天看了mj老师关于http中请求头中参数的讲解,收获了很多,特此整理成笔记记录,方便以后的复习.</h3><h4 id="请求头部分字段"><a href="#请求头部分字段" class="headerlink" title="请求头部分字段"></a>请求头部分字段</h4><table>
@@ -221,85 +300,6 @@
         <tag>File协议</tag>
         <tag>Dict协议</tag>
         <tag>Filter协议</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>Gopher协议学习</title>
-    <url>/2021/12/27/gopher%E5%8D%8F%E8%AE%AE%E7%9A%84%E5%AD%A6%E4%B9%A0/</url>
-    <content><![CDATA[<h4 id="Gopher协议的学习"><a href="#Gopher协议的学习" class="headerlink" title="Gopher协议的学习"></a>Gopher协议的学习</h4><h5 id="定义："><a href="#定义：" class="headerlink" title="定义："></a>定义：</h5><p>Gopher是Internet上一个非常有名的信息查找系统，它将Internet上的文件组织成某种索引，很方便地将用户从Internet的一处带到另一处。在WWW出现之前，Gopher是Internet上最主要的信息检索工具，Gopher站点也是最主要的站点，使用tcp70端口。但在WWW出现后，Gopher失去了昔日的辉煌。现在它基本过时，人们很少再使用它；(百度百科)</p>
-<h5 id="gopher协议格式"><a href="#gopher协议格式" class="headerlink" title="gopher协议格式:"></a>gopher协议格式:</h5><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">gopher协议  URL:gopher://&lt;host&gt;:&lt;port&gt;/&lt;gopher-path&gt;_后接TCP数据流 可用于构造Http请求包</span><br></pre></td></tr></table></figure>
-
-<span id="more"></span>
-
-<h5 id="利用条件"><a href="#利用条件" class="headerlink" title="利用条件"></a>利用条件</h5><img src="/2021/12/27/gopher%E5%8D%8F%E8%AE%AE%E7%9A%84%E5%AD%A6%E4%B9%A0/1.png" class="">
-
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">nc -lvp 4444  //kali开启4444端口进行监听 </span><br></pre></td></tr></table></figure>
-
-<img src="/2021/12/27/gopher%E5%8D%8F%E8%AE%AE%E7%9A%84%E5%AD%A6%E4%B9%A0/2.png" class="">
-
-<h5 id="通过pikachu靶场演示"><a href="#通过pikachu靶场演示" class="headerlink" title="通过pikachu靶场演示"></a>通过pikachu靶场演示</h5><img src="/2021/12/27/gopher%E5%8D%8F%E8%AE%AE%E7%9A%84%E5%AD%A6%E4%B9%A0/3.png" class="">
-
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">http://192.168.159.132/pikachu/vul/ssrf/ssrf_curl.php?url=http://192.168.159.132/pikachu/vul/ssrf/ssrf_info/info1.php //看到网站url参数为url=一个url 可能存在ssrf漏洞</span><br></pre></td></tr></table></figure>
-
-<p>我们可以将url后面的参数改为gopheri协议像目标主机发送数据流</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">http://192.168.159.132/pikachu/vul/ssrf/ssrf_curl.php?url=gopher://kaliIP:端口号/这是我发送的数据</span><br></pre></td></tr></table></figure>
-
-<img src="/2021/12/27/gopher%E5%8D%8F%E8%AE%AE%E7%9A%84%E5%AD%A6%E4%B9%A0/4.png" class="">
-
-<p>可以看到kali这边成功的接收到了我们通过gopher协议传输的数据</p>
-<h5 id="gopher协议发送GET、POST请求"><a href="#gopher协议发送GET、POST请求" class="headerlink" title="gopher协议发送GET、POST请求"></a>gopher协议发送GET、POST请求</h5><h6 id="GET请求"><a href="#GET请求" class="headerlink" title="GET请求"></a>GET请求</h6><p>步骤</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">1、构造HTTP数据包</span><br><span class="line">2、URL编码、替换回车换行为%0d%0a</span><br><span class="line">3、发送gopher协议</span><br></pre></td></tr></table></figure>
-
-<p>GET型的HTTP数据包</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">GET /ssrf/base/get.php?url=test HTTP/1.1</span><br><span class="line">Host: 192.168.159.132</span><br></pre></td></tr></table></figure>
-
-<p>为了方便我们直接在kali中进行演示</p>
-<p>首先进入/var/www/html目录下创建gopher.php</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">cd /var/www/www   </span><br><span class="line">vim gopher.php</span><br></pre></td></tr></table></figure>
-
-<p>将php代码写入gopher.php中</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&lt;?php echo &quot;Hello &quot;.$_GET[&quot;name&quot;].&quot;\n&quot; ?&gt;</span><br></pre></td></tr></table></figure>
-
-<p>开启apache</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">systemctl start apache2 //开启apache</span><br></pre></td></tr></table></figure>
-
-<p>重新打开一个shell</p>
-<p>输入命令 这里注意我们使用的是http数据包,我们每次在浏览器输入的参数等,浏览器都会进行url编码以后才会传输.</p>
-<p>因此我们需要对输入的命令进行url编码</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">curl gopher://192.168.159.131:80/_GET%20/gopher.php%3fname=xiaobai%20HTTP/1.1%0d%0AHost:%20192.168.159.131%0d%0A </span><br></pre></td></tr></table></figure>
-
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">1、问号（？）需要转码为URL编码，也就是%3f</span><br><span class="line">2、回车换行要变为%0d%0a,但如果直接用工具转，可能只会有%0a</span><br><span class="line">3、在HTTP包的最后要加%0d%0a，代表消息结束 //具体http格式可参考之前写的http请求头学习的文章</span><br></pre></td></tr></table></figure>
-
-<p>成功通过get方式发送http数据包</p>
-<img src="/2021/12/27/gopher%E5%8D%8F%E8%AE%AE%E7%9A%84%E5%AD%A6%E4%B9%A0/5.png" class="">
-
-<h6 id="POST请求"><a href="#POST请求" class="headerlink" title="POST请求"></a>POST请求</h6><p>同样的方法先在html目录下创建gopher_post.php文件</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">cd /var/www/www</span><br><span class="line">vim gopher_post.php</span><br></pre></td></tr></table></figure>
-
-<p>php代码</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&lt;?php</span><br><span class="line">    echo &quot;Hello &quot;.$_POST[&quot;name&quot;].&quot;\n&quot;</span><br><span class="line">?&gt;</span><br></pre></td></tr></table></figure>
-
-<p>post请求包格式</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">POST /gopher_post.php HTTP/1.1 //请求行</span><br><span class="line">host:192.168.159.131 //请求头 </span><br><span class="line"></span><br><span class="line">name=libo //请求实体 </span><br></pre></td></tr></table></figure>
-
-<p>这里需要提醒一下,get请求包是没有请求实体的参数直接跟在了uri后面,而post请求包参数是放在请求实体的,具体详细信息可以参考我之前的文章HTTP请求头的学习文章有详细介绍.</p>
-<p>url编码后</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">curl gopher://192.168.159.131:80/_POST%20/gopher_post.php%20HTTP/1.1%0d%0AHost:192.168.159.131%0d%0AContent-Type:application/x-www-form-urlencoded%0d%0AContent-Length:13%0d%0A%0d%0Aname=xiaobai%0d%0A </span><br></pre></td></tr></table></figure>
-
-<img src="/2021/12/27/gopher%E5%8D%8F%E8%AE%AE%E7%9A%84%E5%AD%A6%E4%B9%A0/6.png" class="">
-
-<p>成功通过post方式发送数据包</p>
-<p>注意:POST请求头在原有基础上多增加了Content-Type,Content-Length两个请求头参数.</p>
-<blockquote>
-<p>借鉴文章[Gopher协议在SSRF漏洞中的深入研究(<a href="https://zhuanlan.zhihu.com/p/112055947">https://zhuanlan.zhihu.com/p/112055947</a>)</p>
-</blockquote>
-]]></content>
-      <categories>
-        <category>网络协议学习</category>
-      </categories>
-      <tags>
-        <tag>http协议</tag>
-        <tag>Gopher协议</tag>
       </tags>
   </entry>
   <entry>
